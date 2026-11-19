@@ -1,0 +1,455 @@
+# Task: Implement the mathematical formulation of the M/P/R/I Patent Analysis Pipeline
+
+Implement the mathematical formulation described in the attached LaTeX document as a modular, testable software implementation.
+
+## 1. First inspect, then implement
+
+Before writing code:
+
+1. Inspect the existing repository structure, language, dependencies, data schemas, and current M/P/R/I classification pipeline.
+2. Read the entire attached mathematical formulation.
+3. Map every mathematical definition, equation, objective function, and inference step to a proposed software component.
+4. Identify which parts are fully specified, which require design decisions, and which require additional training data.
+5. Present a concise implementation plan and identify any mathematical ambiguities before making significant architectural changes.
+
+Preserve existing working functionality. Do not rewrite unrelated components.
+
+## 2. Required architecture
+
+Implement modular components for:
+
+- **Patent input representation:** patent title, abstract, VLM-generated figure descriptions, patent identifier, owner/company metadata, and optional source-span references.
+- **Semantic evidence extraction:** structured concepts, relations, semantic roles, evidence spans, source modality, and extraction confidence. Use a consistent schema for training and inference.
+- **M/P/R/I classification:** four category scores, predicted class, and supporting semantic evidence.
+- **Concept Lattice:** construct the formal context from training patents and extracted concepts; implement formal concept analysis using clearly defined object-attribute incidence relations. Preserve concepts shared across categories.
+- **Category relevance:** implement the mathematical scoring functions in the specification, including the definition and normalization of concept-to-patent matching weights.
+- **Evidence provenance:** preserve links from every extracted concept and relation to the patent and source passage or figure description.
+- **Technical capability graph:** aggregate patent-level concepts and relations into a company-level graph without treating company identity as a shortcut for the M/P/R/I classifier.
+- **Organizational inference:** represent candidate organizational structures and estimate their plausibility from the technical capability graph and any available independent organizational evidence.
+
+## 3. Mathematical fidelity
+
+Treat the attached LaTeX specification as the primary reference.
+
+- Implement equations explicitly rather than replacing them with arbitrary heuristics.
+- Define every variable, tensor, score, normalization, and loss term in code documentation.
+- Implement teacher–student distillation only where the required teacher outputs and training targets are available.
+- Separate classical Formal Concept Analysis from any weighted or differentiable extension. Do not describe a modified algorithm as classical FCA.
+- Do not invent missing loss functions, thresholds, probability distributions, or training labels. Document unresolved choices and propose justified alternatives.
+- If the specification is mathematically incomplete, implement the well-defined parts and expose the unresolved components through explicit interfaces.
+
+## 4. Organizational inference constraints
+
+Patent evidence reveals technical capabilities; it does not directly reveal a company's actual departments or reporting hierarchy.
+
+- Distinguish observed technical capabilities from inferred organizational hypotheses.
+- Do not claim that organizational probabilities are calibrated unless validated against suitable ground-truth data.
+- If labeled organizational structures are unavailable, do not fabricate training data or claim to have trained a Bayesian or latent-variable model.
+- In that situation, implement a clearly labeled baseline or candidate-generation interface, document its assumptions, and identify the data required for a trainable probabilistic model.
+- Preserve uncertainty, alternative candidate structures, and evidence provenance.
+- Allow abstention when the available evidence cannot distinguish between competing organizational hypotheses.
+
+## 5. Testing and evaluation
+
+Add unit tests for:
+
+1. Semantic evidence schema validation.
+2. M/P/R/I score computation and prediction.
+3. Formal context construction and concept-lattice correctness on a small, manually verifiable example.
+4. Shared concepts appearing across multiple categories.
+5. Evidence provenance and graph aggregation.
+6. Organizational inference behavior when evidence is insufficient.
+7. Missing fields, malformed inputs, and empty patent collections.
+8. Reproducibility and numerical stability of implemented scoring functions.
+
+Add integration tests using synthetic, explicitly labeled examples. Keep synthetic data separate from real training and evaluation datasets.
+
+Where suitable labeled datasets exist, provide evaluation interfaces for classification metrics, graph quality, and organizational inference. Do not report invented performance results.
+
+## 6. Deliverables
+
+Provide:
+
+- Implementation plan and mathematical-to-code mapping.
+- Modular implementation integrated into the existing repository.
+- Unit and integration tests.
+- Documentation of assumptions and unresolved mathematical decisions.
+- A minimal runnable example using synthetic patent records.
+- Instructions for running the tests and example.
+- A final report listing implemented equations, deviations from the specification, missing data dependencies, and remaining work.
+
+Do not claim that the complete mathematical model is implemented until each specified component has been mapped to code and verified by tests. Start by inspecting the repository and the attached LaTeX specification.
+Shell Inspect repository 8 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && ls -la && find . -maxdepth 3 -not -path './.git*…
+
+The repo has no code, only the spec. Reading it.
+
+Read patent_organizational_inference_math .tex 195 lines read
+
+Shell Check python deps 2 lines…
+python3 --version; python3 -c "import numpy,pytest;print(numpy.__version__,pytest.__version__)"
+
+Thought
+I'm starting a fresh repo and leaning toward a pure-Python `patent_mpri` package, maybe with numpy for the KD loss, though pure Python looks fine. I'm also working through how to define the membership score μ for a classical concept, and a binary version where the intent attributes must all appear in the patent's cue set is on the table.
+
+I'm settling the defaults for the membership score: the binary version is 1 if the concept's intent is contained in the patent's cues, with a graded fraction as a labeled extension, and I'm leaning toward excluding the empty-intent top concept by default. Weights default to uniform, the softmax temperature stays at an uncalibrated T=1 with a note that it flattens scores, and I'm planning around leakage and abstaining on all-zero matches.
+
+I'm laying out the remaining modules: scoring, the schema provenance, graph, org inference, distillation losses with the unimplemented interfaces, evaluation, the teacher protocol, the classifier pipeline, plus an example, tests, and docs. For org inference I'm considering a few candidate structures (no structure, a single flat unit, grouping by dominant category, and grouping by co-occurrence), scored as relative compatibility rather than probability, and abstaining when the top margin is too small.
+
+I'm sketching the schema next: a Cue with its term, role, and modality (title, abstract, or figure), plus an optional span and figure id, and I'm still deciding how to represent the uncertainty on each cue.
+
+I'm settling how a cue gets stored: a confidence in [0,1] with uncertainty as its complement, plus relations that point from a head cue to a tail with an uncertainty value. Evidence is tagged as explicit, semantic interpretation, or capability hypothesis, and span validation will only check that offsets fall within the modality text, not that the term actually appears there. For attributes I'm leaning toward normalized lowercase terms, possibly prefixed with their role, through a configurable attribute function.
+
+I'm working out the lattice module next: enumerating the closed concepts with NextClosure over bitmask attributes, with the Hasse covers checked against a brute-force enumeration on a tiny example.
+
+I'm checking the brute-force comparison for the seven concepts on the small example, then moving on to how the graded membership score uses each attribute's confidence.
+
+I'm now laying out the package files, with the mu functions split into a classical binary containment version and a labeled graded extension. Extraction is next, starting with a teacher protocol and a rule-based option.
+
+I'm going to define the schema next, with a provenance-tagged annotation that pulls each patent's cues from precomputed data through a small extractor interface, with no fake LLM stand-in.
+
+The repo is greenfield: it holds only the spec (.tex and .pdf) and no existing code. I'll build a stdlib-only Python package and note the design decisions in the docs.
+
+Shell Create dirs 1 line…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && mkdir -p patent_mpri tests examples docs && echo…
+
+Create schema.py Parent directory does not exist
+Create lattice.py Parent directory does not exist
+
+Thought
+I'm working on a parallel race, rebuilding it from scratch. My NextClosure condition is tangled, so I'll rewrite it cleanly: step i from n-1 down to 0, skip attributes already in A, and take the closure of the prefix of A below i plus i, accepting it if its lower part matches A's. I start from the closure of the empty set and stop once the current set equals the full attribute set.
+
+Now I'm wrapping up the loop logic so it stops once the set reaches the full attribute list.
+
+Create schema.py +206
+Create lattice.py +150
+
+Thought
+Now I'm turning to scoring.py and laying out its components, starting with the MuFunction. The binary containment version checks whether the intent set is a subset of the patent's attributes, returning 1 when the intent is empty, and the graded mean version averages the max confidence per attribute.
+
+I'm settling the defaults for the scorer: the ρ computation, the ε handling in the denominator, and a numerically stable softmax that subtracts the max and validates T > 0. I'm leaning toward including all concepts by default for faithfulness to the spec, with a `skip_empty_intent` option for the trivial case, and I'm making sure weights stay non-negative and finite.
+
+I'm moving on to the classifier, planning a MPRIClassifier whose fit and predict return scores, probabilities, a prediction, and the top evidence with its cue ids. I'm also thinking about the distillation side: a temperature softmax, KL and cross-entropy losses, and a combined student loss that needs callables for the unspecified span and relation terms.
+
+I'm writing the distillation module now: a temperature softmax for the student, a student class distribution from W, b, and z, and encoder interfaces defined as protocols only.
+
+Create scoring.py +134
+Create distillation.py +102
+
+Thought
+Next I'll go through classifier.py, graph.py, orginference.py, and evaluation.py. In classifier.py, MPRIClassifier.fit takes the patents and an annotator and builds the annotations, context, lattice, and scorer, raising an error for unlabeled patents or an empty collection. predict returns a Prediction with scores, probabilities, the predicted class, and supporting evidence from the top concepts by Δ, listing their intent attributes with the cues behind them.
+
+I'm working out how the classifier should build its attribute map for training, where binary mode treats confidence at or above the threshold as crisp 1.0 and graded mode keeps the raw confidences. I also want predict to pass the annotator a sanitized copy of the patent with company and label cleared, so the classifier never sees leaked fields. Last, I'm sketching the CompanyGraph, whose nodes are concepts carrying patent ids, evidence records, mean confidence, and evidence-type counts.
+
+I'm now laying out the org inference piece: a hypothesis would hold named units mapping to sets of graph nodes, with candidates generated as a single unit, connected components of the relation-plus-co-occurrence graph, and a category grouping when labels exist. I'm also weighing a compatibility score that starts from the share of edge weight kept inside each unit.
+
+I'm weighing a modularity score Q for the partition on the weighted co-occurrence graph, since a single unit comes out at Q=0 and that avoids favoring one big unit. I'm also considering adding a bonus for external same-unit assertions that the partition satisfies, weighted by λ, and reporting the combined total as relative support rather than as a probability.
+
+I'm setting up the org inference hypothesis structure, where each candidate maps named units to sets of graph nodes. I'm deciding when to abstain: too few patents or nodes, too few distinct candidates, or a margin between the top two scores that falls below a configurable threshold, with ties also treated as abstention. The result would carry the ranked hypotheses and a status marking it as heuristic and uncalibrated, with provenance linking each unit's nodes back to evidence ids.
+
+I'm moving on to the evaluation side now, covering macro-F1, balanced accuracy, the confusion matrix, and calibration error, plus span, relation, and graph node/edge precision-recall against references. For organization inference I'd compare the top hypothesis to a reference partition with a pair-counting score, and I'd split data by family so related patents stay together.
+
+Create classifier.py +113
+Create graph.py +103
+
+Thought
+I'm settling on how to infer organizations now: I'll run modularity on the weighted co-occurrence graph, with every node included even if it has no edges. If the total edge weight is zero, I can't evaluate it and will abstain. For edge weights, I'm weighing whether to use patent-level co-occurrence counts alone or add the number of supporting patents from relation edges.
+
+I'm adding candidate partitions here: a single-unit grouping, connected components over edges with weight at least the minimum (clusters of concepts linked through shared patents), and groupings by dominant category where category counts exist, with uncategorized nodes set aside. I'll drop duplicate partitions, and I expect the component-based Q scores to come out high.
+
+Create orginference.py +204
+Create evaluation.py +98
+Create __init__.py +9
+
+Thought
+I'm setting up a synthetic dataset script at examples/synthetic_data.py, with a helper that builds the patents and their annotations. The plan is eight patents across two companies, with a `cue` helper that marks spans by finding terms in the abstract.
+
+Now I'm assigning each patent its attributes: A2 and A3 both carry "sensor", and the forecast and anomaly terms are split across the A and R groups. The helper will join the terms into an abstract and place the cue spans by position.
+
+Shell Create synthetic data/example and run 83 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && cat > examples/synthetic_data.py <<'EOF' """SYNT…
+
+Thought
+Next I'm writing tests for items 1 through 8, starting with a hand check of the lattice example with its seven concepts. I also want to verify the rho calculation and score a tiny example by hand, using two patents and the concepts they produce.
+
+I'm checking the rho values for the two concepts: c1 comes out to 1/2 for both labels, and c2 gives 1 for P since only p2 has it. Then I'll score the sample patent p* = {a,b} with unit weights, which gives s_M = 0.25 and s_P = 0.75.
+
+Shell Write and run tests 398 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && cat > tests/test_unit.py <<'EOF' import itertool…
+
+Thought
+The empty-intent concept has no cues, which is fine. The test I need to fix is the one that expects every concept to have cues; it should only apply to non-empty-intent concepts. I'll also tidy up the macro_f1 assertion while I'm there.
+
+Shell Fix tests and rerun 9 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && python3 - <<'EOF' p='tests/test_unit.py' s=open(…
+
+Now the documentation.
+
+Create IMPLEMENTATION.md +63
+
+Shell Final test run and cleanup 2 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && find . -name __pycache__ -prune -exec rm -rf {} …
+
+The scored classifier, the concept lattice, the evidence and graph layer and a baseline organizational stage are built and tested. The training side and the probabilistic organizational model are not, and the 31 tests and the example run only on synthetic data.
+
+The folder held only the spec (.tex/.pdf), with no existing code, data or classification pipeline. I started a new stdlib-only Python package, patent_mpri/, so no existing functionality was touched. I read the spec first, mapped each equation to a component, and listed the ambiguities in docs/IMPLEMENTATION.md before coding.
+
+Implemented and tested:
+
+• Schema: patent title, abstract, figure descriptions, company and label, plus evidence cues, relations and provenance records, all validated. Company and label are stripped before the classifier sees a patent, and a test checks this.
+• Lattice: classical binary concept analysis over the extracted terms. It matches a manually worked four-patent example and an independent brute-force check.
+• Scoring: concept-to-category relevance, category scores, softmax calibration, prediction, and per-concept contributions linked back to source cues. Concepts shared across categories are kept, and the tests check the hand-computed values.
+• Graphs and distillation: company-level capability graphs with provenance, the classification and distillation loss terms, and evaluation metrics. The metrics (macro-F1, balanced accuracy, calibration error, span/relation/graph precision-recall-F1, family-safe splits) have no real results reported.
+
+Deviations and gaps (details in docs/IMPLEMENTATION.md):
+
+• Undefined in the spec: the concept-to-patent matching weight, the concept weights, the calibration temperature, the epsilon and the evidence score. I picked documented defaults (classical containment matching, equal weights, temperature 1). A graded matching variant exists, labelled as an extension rather than classical concept analysis.
+• Default behaviour: the top concept (empty intent) is kept, as the spec's sum over all concepts says. It acts as a class prior, so the classifier abstains only when nothing matches, and the default scores are nearly flat after the softmax.
+• Interface only: the teacher and student annotators, the text/figure encoders, the span, relation, lattice and organizational loss terms, and a differentiable lattice raise NotImplementedError or are left as protocols. Nothing is trained, and no training data is invented.
+• Organizational stage: it is a heuristic baseline, not a trained or calibrated model. It ranks a few candidate structures by modularity and agreement with external evidence, keeps the alternatives, and abstains when evidence is thin or the top two are too close. Its two thresholds (3 patents, 0.05 margin) are arbitrary defaults, not validated values.
+• Missing data: a trainable organizational model needs real reference org structures for many companies. The span, relation and distillation losses need gold annotations and a calibrated teacher. The concept weights and temperature need a validation set.
+
+The example prints per-patent scores and per-company organizational hypotheses on the hand-made records in examples/synthetic_data.py.
+
+To run:
+
+python3 -m pytest -q tests
+python3 examples/run_synthetic_example.py
+
+Task complete 
+I added a new stdlib-only Python package, patent_mpri/. It covers the classifier, the concept lattice, the evidence and graph layer, and a baseline organizational stage. The 31 tests pass, but they run only on synthetic data, so nothing here is validated on real patents. The spec is not fully implemented.
+
+The folder held only the spec (.tex and .pdf), so there was no existing pipeline to preserve.
+
+Implemented and tested:
+
+ - Schema: patent input, evidence cues, relations and provenance records, all validated. Company and label are stripped before the classifier sees a patent.
+ - Lattice: classical binary Formal Concept Analysis. The tests check it against a manually worked four-patent example and a brute-force enumeration.
+ - Scoring: the concept-to-category relevance, the category scores, the softmax calibration, the prediction, and per-concept contributions linked back to source cues. Concepts shared across categories are kept.
+ - Graphs and distillation: company-level capability graphs with provenance, and the cross-entropy, knowledge-distillation and weighted student-loss terms.
+ - Evaluation: metric functions (macro-F1, balanced accuracy, calibration error, span/relation/graph/partition precision-recall-F1, family-safe splits). No performance numbers are reported.
+
+Deviations from the spec:
+
+ - Choices the spec leaves open: the concept-to-patent matching weight, concept weights, calibration temperature, epsilon and the evidence score. I used documented defaults (containment matching, equal weights, temperature 1). The graded matching variant is labelled as an extension, not classical FCA.
+ - Default behaviour: the empty-intent top concept is kept, so it acts as a class prior. As a result the classifier abstains only when nothing matches, and the default softmax scores are nearly flat.
+ - Organizational stage: it is a heuristic baseline, not a trained or calibrated model. It ranks candidate structures by modularity plus agreement with independent evidence, keeps the alternatives, and abstains when evidence is thin or the top two candidates are too close. Its thresholds (3 patents, 0.05 margin) are arbitrary defaults.
+ - Interface only: the teacher and student annotators, the text and figure encoders, and the span, relation, lattice and organizational losses are protocols or raise NotImplementedError. Multi-label classification is not implemented.
+
+Missing data: a trainable organizational model needs real reference org structures for many companies. The span, relation and distillation losses need gold annotations and a calibrated teacher. Learning the concept weights and temperature needs a validation set.
+
+Where things are:
+
+ - docs/IMPLEMENTATION.md has the equation-to-code map, the assumptions, the unresolved decisions and the remaining work.
+ - examples/synthetic_data.py holds the hand-made records, flagged SYNTHETIC = True.
+
+To run:
+
+ python3 -m pytest -q tests
+ python3 examples/run_synthetic_example.py
+
+Connected Connectors could not be loaded; existing local and self-hosted MCP servers remain available.
+
+Connected to Visual Studio Code
+
+MCP Servers reloaded: 2 servers connected
+## Follow-up task: Audit and correct the M/P/R/I implementation
+
+Review the current `patent_mpri` implementation and its `docs/IMPLEMENTATION.md`. Do not rewrite the project from scratch.
+
+### Priority 1 — Correct the classification mathematics
+1. Exclude the empty-intent formal concept from evidence-based category scoring by default.
+2. If class priors are needed, represent them explicitly and separately from patent evidence.
+3. Add tests demonstrating that a patent with no relevant cues does not receive misleading evidence-based scores.
+4. Verify that category scores change for the correct reasons when relevant evidence is added or removed.
+5. Distinguish raw category scores, softmax-normalized scores, and calibrated probabilities in APIs, variable names, and documentation.
+6. Check whether the current concept-to-category relevance and patent-to-concept matching equations implement the intended mathematical definitions exactly.
+
+### Priority 2 — Audit organizational inference
+1. Trace exactly how patent-level evidence becomes a company-level graph.
+2. Verify that edge weights distinguish direct semantic relations from mere co-occurrence.
+3. Verify that modularity is computed consistently for every candidate partition, including disconnected graphs and isolated nodes.
+4. Inspect whether grouping by M/P/R/I labels creates unjustified assumptions about organizational units.
+5. Keep heuristic compatibility scores separate from probabilities.
+6. Add adversarial tests where technically distinct clusters belong to one hypothetical organization, and where similar technical capabilities belong to separate hypothetical units.
+7. Preserve abstention and explain which evidence is insufficient.
+
+### Priority 3 — Separate implemented functionality from interfaces
+Create a status table for every equation and component in the LaTeX specification, with one of these statuses:
+- Implemented and unit-tested
+- Implemented but not validated on real data
+- Interface only
+- Not implemented
+- Requires additional labeled data
+
+For each implemented equation, cite its corresponding source file, function, and test.
+
+### Priority 4 — Verify
+Run the existing tests and add regression tests for all corrections. Do not claim real-world accuracy, calibrated probabilities, or a trained teacher–student model unless these have actually been demonstrated.
+
+Preserve the existing architecture and report any unresolved mathematical ambiguities instead of silently inventing solutions.
+Thought for 42s
+I'm planning the work and putting the highest-priority item first: leaving the empty-intent concept out of scoring by default, which means adding an `include_top_concept=False` option to ConceptScorer. I also want to split the class priors out of the training labels into their own `class_priors` with a `prior()` method, and rename the raw scores to `raw_scores` so they don't clash with the softmax-normalized and calibrated versions.
+
+I'm settling the naming: `probabilities` becomes `softmax_scores`, since calibration hasn't been validated, and the field is marked `calibration_status="uncalibrated"`. When there's no evidence at all, the softmax scores should be None rather than a uniform distribution, so I'm checking that the abstain path handles that. I'm also verifying that rho and mu are computed exactly as specified, with the one open question being whether graded fitting uses the non-crisp confidences for training.
+
+I'm weighing whether the bottom concept with an empty extent should count toward the scoring mass. A new patent that has all the attributes would give it mu=1, but its rho is 0 since it has no training support, so it dilutes the scores. The spec sums over every concept, so I'll keep it as written and note it as an open question rather than change it.
+
+I'm checking the graded-fitting case now: a training patent in the extent can end up with mu below 1, because crisp=False keeps its attribute confidences under 1. That's expected, so I'll document it. Next is the trace graph, where the edge weight mixes co-occurrence and relation counts into one number, which means it can't tell the two apart. I'm considering giving each its own coefficient, so the weight is alpha_cooc times the co-occurrence count plus alpha_rel times the relation count.
+
+I'm weighing whether the trace graph's edge weight should keep co-occurrence and relation counts as separate components, since folding them into one number hides which signal drives a link. I'm considering explicit coefficients for each, with defaults I'd document as arbitrary, and I'm also checking the case where a relation and a co-occurrence both land on the same pair of concepts.
+
+I'm now checking that the modularity calculation validates the partition, so every node appears in exactly one unit, since edges might reference nodes missing from the partition and would break the lookups.
+
+I'm checking the modularity calculation next, making sure the partition covers every node exactly once so no edge endpoint goes missing from the lookups. I'm also reconsidering the category-based grouping, since treating nodes with no category counts as an "unassigned" group is an assumption I can't justify, so I'll make it opt-in rather than default.
+
+I'm checking whether modularity can tell apart distinct clusters that belong to one organization from separate units. External "same_unit" evidence across clusters should push the score toward a single unit, though the weight on that evidence is arbitrary. Without such evidence, the patents alone can't settle it, since modularity will always favor splitting.
+
+I'm now weighing whether to make the abstention explicit: if no external evidence applies, the modularity result can only describe technical clusters, so I'd flag it as not distinguishing organizational units. Setting `abstain_without_external=True` by default would stop the example from reporting a confident split, though the ranked clusters would still be visible.
+
+I'm settling how the modularity check should handle the second case: two concepts that co-occur heavily might still be in separate units, and an external "different_unit" signal should be able to override the patent-only picture. Since the next thinking cuts off mid-setup, I'll stop at the point where it shows that, with only one candidate left, the result collapses to a single unit.
+
+I'm working out how the external-evidence candidate should handle a pair of concepts that co-occur but are marked as different units. A partition built from the same-unit assertions would keep them apart, and the modularity score would favor that split over a single merged unit, so the different-unit signal can override the patent-only picture.
+
+I'm now working on the abstention logic: when no external evidence applies, I'll report the missing evidence explicitly, and rename the score field to `compatibility_score` so it's clear what it measures. I'll update the tests to match, then move on to the status table and run everything.
+
+I'm turning to the scorer's interface now: inactive concepts with empty intent would be skipped by default, and I'm shaping the classifier to match that.
+
+I'm switching the scorer to return softmax scores separately from the class priors, and dropping the old `probabilities` name. Calibrated probabilities will raise an error unless the temperature has been validated. Predictions will come from the argmax over the softmax scores, which gives the same ranking as the raw scores.
+
+I'm thinking about the zero-score case now: if every matched concept has zero raw score even though some evidence matched, the softmax comes out uniform and a tie-break would name a class by accident. So I want the classifier to abstain when the best raw score is not positive. I also need to update the test that expects a tie to resolve to "M", since that concept has an empty intent and would now be excluded.
+
+Next I'm updating the classifier to take the same include_empty_intent option, so empty-intent concepts stay out of the shared-concept logic and the supporting list. I'm also renaming the prediction fields to raw_scores and softmax_scores, with the evidence mass alongside them, and I'll fix the example and integration tests that still read the old probabilities field.
+
+I'm working through the top concept's intent: the empty-intent case only arises when no attribute is shared by every patent, so in this lattice the top concept actually carries intent {a}, which counts as real evidence.
+
+I'm checking how the top concept behaves in the synthetic data, where it ends up with an empty intent, so its scores shift. Predictions should still hold, since every patent has attributes and will match.
+
+I'm planning to hand-check the "relevant evidence" behavior with a small corpus, covering a patent with no cues, one with only unseen terms, and cues that push the score toward M or P.
+
+I'm working through a small hand-checkable corpus: four patents, two per class, with attributes a, b, s, and t. I'm listing the concepts and their class distributions, such as {a} covering only M and {s} splitting evenly between M and P, so I can check scores by hand. I'm about to test a patent with only the cue {a}, which should match just the concept {a}.
+
+I'm checking the scorer against a small four-patent corpus where I can work out the numbers by hand. A patent with only the cue {a} should put all its weight on M, adding {s} should pull the scores toward a split, and removing {s} should restore M. Adding {b} to {a} should land on an exact tie.
+
+I'll start with the classification fixes in scoring.py.
+
+Shell Rewrite scorer, update classifier 124 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && python3 - <<'EOF' p='patent_mpri/scoring.py' s=o…
+
+Thought for 1s
+I'm reworking the org inference step: splitting edge weights into separate co-occurrence and relation components. The relation part needs to count patent IDs per undirected pair and also track how many distinct relation types there are.
+
+I'm splitting the relation counts out from co-occurrence, summing patent IDs per undirected pair and counting each relation type separately, then rewriting the org inference parts to match.
+
+Now the organizational inference changes.
+
+Shell Edit orginference and example, run 208 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && python3 - <<'EOF' p='patent_mpri/orginference.py…
+
+Thought for 7s
+Since AcmeCo now abstains instead of proposing a category, the existing tests need updating. I'll fix the renamed attributes (scores to raw_scores, probabilities to softmax_scores) and adjust the abstain test, then add regression tests.
+
+I'm switching the remaining test fixes over to `allow_patent_only=True`, since the four-patent case without external support now abstains, and I'll use `top.external_support` and the BetaCorp best match in the integration test.
+
+Shell Update existing tests 43 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && python3 - <<'EOF' import re p='tests/test_unit.p…
+
+Thought for 1s
+I'm checking why the support set is coming back empty, since the positive-delta items should be at the front of the ordering. The `pred` value looks fine, so I want to read through the code directly.
+
+Shell View classifier predict 31 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && sed -n 85,115p patent_mpri/classifier.py
+
+Thought for 1s
+Supporting came back empty even though the check looked right, and `pr.supporting` printed as `()`. I suspect the issue is with how `pred` indexes into `ds[i]`, so I'll debug that lookup.
+
+Shell Debug supporting 10 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && python3 - <<'EOF' import sys; sys.path.insert(0,…
+
+Thought for 1s
+I'm checking why the supporting items came back empty after my edit to `top_support`. The `order[: self.top_support]` slice looks right, so I'm suspecting the replacement in `__init__`, and I want to print the repr of the Prediction to see what's actually there.
+
+I'm checking whether the `pred` filter is dropping the top-scoring items, since sorting by negative deltas should put the 0.99 entry first. Next I'll run `clf.predict` on the first sample to confirm the path matches what I'm assuming.
+
+Shell Inspect init 24 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && sed -n 44,60p patent_mpri/classifier.py; grep -n…
+
+Field order bug: calibration_status now precedes supporting, so my positional call put pred and sup in the wrong fields. I'll use keywords.
+
+Shell Fix field order and rerun 8 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && python3 - <<'EOF' p='patent_mpri/classifier.py' …
+
+Thought for 38s
+The existing test caught it, so I'm adding a new regression test file, tests/test_audit.py. I'm starting with the classification tests, beginning with an empty-intent case: a corpus where the top class has no intent. A patent with no cues should give all-zero raw scores, no softmax, and no prediction, while turning on include_empty_intent would let the top class contribute prior-like scores, which is the old misleading behaviour.
+
+I'm writing out the test cases for the classification module now: checking that unseen terms and added or removed evidence give the expected hand-computed scores, and that class priors stay separate from the raw scores. Next I'm verifying that softmax sums to one while calibrated probabilities raise an error, and that binary memberships match extent membership exactly.
+
+I'm setting up the organisation tests next: first a trace check where co-occurrence-only edges and relation-backed edges are separated by zeroing each weight in turn. Then a modularity check on a graph with an isolated concept, plus partition validation for missing and overlapping nodes. The last item is an adversarial case with two technical clusters under the same organisation, where an external same-unit assertion should make the single-unit partition win.
+
+I'm checking the organisation test numbers: the single-unit partition gets a modularity penalty of .375 against the closure alternative, so it still wins by that margin. Next I'm working through a second adversarial case where a and b co-occur in every patent but an external assertion places them in different units, and the closure candidate with singletons comes out ahead.
+
+I'm renaming the external-constraint hypothesis to `external_constrained`, since it merges only the same-unit links and keeps the rest as singletons. I'm also adding an adversarial check that without external evidence the patent-only case abstains with a note about the missing evidence, and a test that the category hypothesis stays out of the candidates unless explicitly enabled.
+
+I'm finishing the test file by writing out the remaining test cases.
+
+Shell Add audit regression tests 241 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && sed -i 's/external_same_unit_closure/external_co…
+
+Thought for 25s
+I'm tidying up the ugly PrecomputedAnnotator line in the test first, then moving on to IMPLEMENTATION.md. The doc needs a status table with citations, so I'm collecting the function and test names to reference, and I'm drafting the replacement for the map table and the ambiguities section to keep the rewrite concise.
+
+Shell Tidy test 7 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && python3 - <<'EOF' p='tests/test_audit.py' s=open…
+
+Create IMPLEMENTATION.md.new +87
+
+Thought for 3s
+I'm replacing the old doc and fixing the garbled "test_company_not_classifier_input" row text. I also want a quick test for affine_softmax, since the doc currently lists it under "UT (softmax core)", and then I'll move the file.
+
+Shell Install doc, final test run 27 lines…
+cd "/home/sum3clj/Desktop/Projects/Patent Analysis Pipeline" && mv docs/IMPLEMENTATION.md.new docs/IMPLEMENTATIO…
+
+Task complete 
+The audit corrections are in and all 50 tests pass (31 earlier tests, updated where behaviour changed, plus 19 new regression tests in tests/test_audit.py). Everything still runs only on synthetic data, so there is no accuracy, calibration or trained teacher–student result to report.
+
+Classification
+
+ - Empty-intent concept: it matched every patent and injected the training label frequencies as if they were evidence. It is now excluded from the scores, contributions and denominator by default. include_empty_intent=True restores the literal sum over all concepts, and a test shows the artifact.
+ - Priors: they are stored separately as class_priors and never enter the evidence scores.
+ - No evidence: the raw scores are all 0, the softmax is None and the prediction abstains. A softmax of zeros would have faked a uniform distribution. The same applies when every matched concept has zero relevance.
+ - Naming: raw_scores, softmax_scores (not calibrated) and calibrated_probabilities (raises until the temperature is fitted on held-out data) are now distinct in the API and docs.
+ - Equations checked:
+  - Concept-to-category relevance matches an independent evaluation of the spec formula.
+  - Binary patent-to-concept matching equals lattice extent membership for every training patent and concept.
+  - Hand-computed tests show scores moving correctly when evidence is added or removed.
+ - Bug caught on the way: reordering Prediction's fields briefly put the prediction and supporting evidence in the wrong fields. A provenance test caught it and I fixed it.
+
+Organizational inference
+
+ - Edge weights: co-occurrence and direct relation counts are stored separately, and the weight is a_cooc·cooc + a_rel·rel. The two coefficients default to 1 each, which is unvalidated, and cooc_weight=0 uses relations only.
+ - Modularity: it now validates that the partition is disjoint and covers exactly the graph's nodes. Isolated nodes are handled and tested.
+ - M/P/R/I grouping: it is opt-in, because nothing in the spec says organizational units mirror the four categories.
+ - Patent-only abstention: abstention is the default when no independent organizational evidence applies, since patents alone cannot tell technical clusters from organizational units. The result lists the missing evidence, and allow_patent_only=True returns technical-cluster candidates only.
+ - External constraints: I added an external_constrained candidate built from the independent same-unit assertions.
+ - Adversarial tests: two tests pass. Two technical clusters with a same-unit assertion resolve to a single unit. Two always co-occurring capabilities with a different-unit assertion resolve to separate units.
+ - Scores: they are named compatibility_score and are not probabilities.
+
+Behaviour changes you will see
+
+ - Example output: in the synthetic example, AcmeCo now abstains (only one candidate structure remains). Patent-only runs need allow_patent_only=True.
+ - Renamed fields: the old scores and probabilities names are gone from ConceptScorer and Prediction.
+
+Documentation
+docs/IMPLEMENTATION.md now has the status table for every equation and component, with source file, function and test for each implemented item. It also lists the open ambiguities:
+
+ - the matching weight and the attribute universe,
+ - concepts whose extent is the whole training set,
+ - empty-extent concepts diluting the denominator,
+ - the evidence-score definition,
+ - the edge-weight coefficients and abstention thresholds,
+ - the likelihood and prior for the organizational posterior,
+ - training-set leakage in the relevance estimates.
+
+Items needing data (teacher outputs, held-out calibration, reference org graphs) and the unimplemented items (encoders, multi-label, span, relation and lattice losses) are marked there as interface-only or not implemented.
+
+To run: python3 -m pytest -q tests and python3 examples/run_synthetic_example.py.

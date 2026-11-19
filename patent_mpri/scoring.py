@@ -5,9 +5,16 @@ Symbols
   mu(p,c) in [0,1]   concept-to-patent matching weight  (spec leaves it undefined; see below)
   rho(c,k)     = sum_p 1[y_p=k] mu(p,c) / (sum_p mu(p,c) + eps)
   w(c) >= 0    concept weight (spec: "learned or experimentally validated"; default 1)
-  s_k(p*)      = sum_c mu(p*,c) w(c) rho(c,k) / (sum_c mu(p*,c) w(c) + eps)
-  pi_k(p*)     = softmax_k(s_k / T)
+  s_k(p*)      = sum_c mu(p*,c) w(c) rho(c,k) / (sum_c mu(p*,c) w(c) + eps)   RAW score
+  softmax_k    = softmax_k(s_k / T)   spec's "calibrated" pi_k; here only SOFTMAX-NORMALISED:
+                 calibration is not claimed until T is validated on held-out data
   Delta_{c,k}  = mu(p*,c) w(c) rho(c,k)
+
+Empty-intent concept: the top concept of a lattice has an empty intent when no attribute is
+shared by all patents. It matches every patent regardless of its cues, so it carries only the
+training-label frequencies, not evidence. It is EXCLUDED from s_k by default
+(include_empty_intent=False; True reproduces the literal sum over all of C). Class priors are
+kept separately in ConceptScorer.class_priors and are never mixed into s_k.
 
 Matching weights (design decision, the spec only says "measures the association"):
   * binary_containment_mu  -- CLASSICAL: mu = 1[Y subseteq A_p]  (p lies in c's extent
@@ -77,12 +84,16 @@ def compute_rho(concepts: Sequence[FormalConcept],
 
 
 class ConceptScorer:
-    """Fitted scoring model: concepts, rho, w(c), T, eps."""
+    """Fitted scoring model: concepts, rho, w(c), T, eps, class priors."""
+
+    CALIBRATION_STATUS = "uncalibrated"
 
     def __init__(self, concepts: Sequence[FormalConcept], rho: Sequence[Mapping[str, float]],
                  mu: MuFn = binary_containment_mu,
                  weights: Optional[Sequence[float]] = None,
-                 temperature: float = 1.0, eps: float = EPS_DEFAULT):
+                 temperature: float = 1.0, eps: float = EPS_DEFAULT,
+                 include_empty_intent: bool = False,
+                 class_priors: Optional[Mapping[str, float]] = None):
         if len(concepts) != len(rho):
             raise ValueError("concepts and rho differ in length")
         if weights is None:
@@ -93,42 +104,66 @@ class ConceptScorer:
             raise ValueError("eps>0 and temperature>0 required")
         self.concepts, self.rho, self.mu = list(concepts), list(rho), mu
         self.weights, self.temperature, self.eps = list(weights), temperature, eps
+        self.include_empty_intent = include_empty_intent
+        self.class_priors = dict(class_priors) if class_priors else None  # NOT used in s_k
 
     @classmethod
     def fit(cls, concepts, train_attrs, train_labels, mu=binary_containment_mu, **kw):
-        """Estimate rho from labelled training patents. w and T are NOT learned here
-        (the spec gives no objective for them); pass them via kw."""
+        """Estimate rho (and, separately, label-frequency priors) from labelled training patents.
+        w and T are NOT learned here (the spec gives no objective for them)."""
         eps = kw.get("eps", EPS_DEFAULT)
+        n = len(train_labels)
+        priors = {k: sum(1 for v in train_labels.values() if v == k) / n for k in LABELS} if n else None
+        kw.setdefault("class_priors", priors)
         return cls(concepts, compute_rho(concepts, train_attrs, train_labels, mu, eps), mu, **kw)
 
+    def _active(self, i: int) -> bool:
+        return self.include_empty_intent or bool(self.concepts[i].intent)
+
+    def _eff_mu(self, i: int, attrs: AttrConf) -> float:
+        """mu(p*,c_i) w(c_i), or 0 for an excluded (empty-intent) concept."""
+        return self.mu(attrs, self.concepts[i]) * self.weights[i] if self._active(i) else 0.0
+
     def deltas(self, attrs: AttrConf) -> list:
-        """Delta[i][k] = mu(p*,c_i) w(c_i) rho(c_i,k)."""
+        """Delta[i][k] = mu(p*,c_i) w(c_i) rho(c_i,k); aligned with self.concepts."""
         out = []
-        for c, r, w in zip(self.concepts, self.rho, self.weights):
-            m = self.mu(attrs, c) * w
+        for i, r in enumerate(self.rho):
+            m = self._eff_mu(i, attrs)
             out.append({k: m * r[k] for k in LABELS})
         return out
 
-    def scores(self, attrs: AttrConf) -> Dict[str, float]:
-        """s_k(p*). Denominator mass is returned via match_mass()."""
+    def match_mass(self, attrs: AttrConf) -> float:
+        """Denominator sum_c mu(p*,c) w(c) (without eps). 0 means no evidence."""
+        return sum(self._eff_mu(i, attrs) for i in range(len(self.concepts)))
+
+    def raw_scores(self, attrs: AttrConf) -> Dict[str, float]:
+        """RAW s_k(p*) in [0,1]. All zeros when no concept matches."""
         d = self.match_mass(attrs)
         dl = self.deltas(attrs)
         return {k: sum(x[k] for x in dl) / (d + self.eps) for k in LABELS}
 
-    def match_mass(self, attrs: AttrConf) -> float:
-        return sum(self.mu(attrs, c) * w for c, w in zip(self.concepts, self.weights))
+    def has_evidence(self, attrs: AttrConf) -> bool:
+        """True iff some concept matches AND some matched concept has non-zero rho."""
+        return any(v > 0 for v in self.raw_scores(attrs).values())
 
-    def probabilities(self, attrs: AttrConf) -> Dict[str, float]:
-        """pi_k = softmax(s_k / T). T is a calibration temperature; no calibration is
-        performed here, so these are 'pi' in the spec's notation but NOT validated-calibrated."""
-        s = self.scores(attrs)
-        p = stable_softmax([s[k] for k in LABELS], self.temperature)
-        return dict(zip(LABELS, p))
+    def softmax_scores(self, attrs: AttrConf) -> Optional[Dict[str, float]]:
+        """softmax_k(s_k / T): a normalisation of raw scores, NOT a calibrated probability.
+        None when there is no evidence (a softmax of all-zero scores would fake a uniform
+        distribution)."""
+        if not self.has_evidence(attrs):
+            return None
+        s = self.raw_scores(attrs)
+        return dict(zip(LABELS, stable_softmax([s[k] for k in LABELS], self.temperature)))
+
+    def calibrated_probabilities(self, attrs: AttrConf):
+        """Not available: T has not been validated against held-out calibration data."""
+        raise NotImplementedError("temperature T is unvalidated; no calibrated probabilities exist. "
+                                  "Fit T on held-out data (see evaluation.expected_calibration_error).")
 
     def predict(self, attrs: AttrConf) -> Optional[str]:
-        """argmax_k pi_k; None (abstain) if no concept matches at all (mass == 0).
-        Ties resolve by the fixed order M,P,R,I for determinism."""
-        if self.match_mass(attrs) <= 0:
+        """argmax_k of the softmax scores (same argmax as raw scores); None (abstain) when there is
+        no evidence. Ties resolve by the fixed order M,P,R,I for determinism."""
+        p = self.softmax_scores(attrs)
+        if p is None:
             return None
-        p = self.probabilities(attrs)
         return max(LABELS, key=lambda k: (p[k], -LABELS.index(k)))

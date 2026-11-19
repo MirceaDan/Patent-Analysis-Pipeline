@@ -15,12 +15,12 @@ preds = {}
 for p in patents:  # in-sample on purpose; no held-out metric is claimed
     pr = clf.predict(p)
     preds[p.patent_id] = pr.predicted
-    print(p.patent_id, "label", p.label, "pred", pr.predicted,
-          {k: round(v, 3) for k, v in pr.scores.items()})
+    print(p.patent_id, "label", p.label, "pred", pr.predicted, "(raw scores, uncalibrated)",
+          {k: round(v, 3) for k, v in pr.raw_scores.items()})
 graphs, skipped = build_capability_graphs(patents, anns, preds)
 for company, g in graphs.items():
-    res = infer_organization(g, min_patents=3)
+    res = infer_organization(g, min_patents=3, allow_patent_only=True)  # technical clusters only
     print(f"\n[{company}] nodes={sorted(g.nodes)} status={res.status}")
     print("  abstained:", res.abstained, "|", res.reason)
     for s in res.ranked:
-        print(f"  {s.hypothesis.name}: score={s.score:.3f} units={[sorted(u) for u in s.hypothesis.units]}")
+        print(f"  {s.hypothesis.name}: compat={s.compatibility_score:.3f} units={[sorted(u) for u in s.hypothesis.units]}")

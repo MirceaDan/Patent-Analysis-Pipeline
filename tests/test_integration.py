@@ -12,9 +12,9 @@ def test_pipeline_end_to_end():
     ps, an = build()
     clf = MPRIClassifier(PrecomputedAnnotator(an)).fit(ps)
     preds = {p.patent_id: clf.predict(p).predicted for p in ps}
-    assert all(v in "MPRI" for v in preds.values())
+    assert all(v in ("M", "P", "R", "I") for v in preds.values())
     graphs, _ = build_capability_graphs(ps, an, preds)
-    res = {c: infer_organization(g) for c, g in graphs.items()}
+    res = {c: infer_organization(g, allow_patent_only=True) for c, g in graphs.items()}
     assert res["BetaCorp"].best.hypothesis.name == "connected_components"
     assert all(r.status.startswith("heuristic_uncalibrated") for r in res.values())
 
@@ -24,7 +24,7 @@ def test_graded_variant_runs_and_unlabeled_inference():
     clf = MPRIClassifier(PrecomputedAnnotator(an), graded=True).fit(ps)
     ps_unl, _ = build(with_labels=False)
     pr = clf.predict(ps_unl[0])
-    assert abs(sum(pr.probabilities.values()) - 1) < 1e-12
+    assert abs(sum(pr.softmax_scores.values()) - 1) < 1e-12
 
 
 def test_example_script_runs():

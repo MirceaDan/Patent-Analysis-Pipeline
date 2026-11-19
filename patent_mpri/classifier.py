@@ -39,20 +39,23 @@ class SupportingConcept:
 @dataclass(frozen=True)
 class Prediction:
     patent_id: str
-    scores: Dict[str, float]  # s_k
-    probabilities: Dict[str, float]  # pi_k (uncalibrated unless T was validated)
-    predicted: Optional[str]  # None = abstain (no concept matched)
+    raw_scores: Dict[str, float]  # s_k, evidence-based, in [0,1]
+    softmax_scores: Optional[Dict[str, float]]  # softmax(s/T); NOT calibrated; None if no evidence
+    predicted: Optional[str]  # None = abstain (no evidence)
     supporting: Tuple[SupportingConcept, ...] = ()
+    calibration_status: str = "uncalibrated"
 
 
 class MPRIClassifier:
     def __init__(self, annotator, graded: bool = False, min_confidence: float = 0.0,
-                 temperature: float = 1.0, eps: float = EPS_DEFAULT, top_support: int = 5):
+                 temperature: float = 1.0, eps: float = EPS_DEFAULT, top_support: int = 5,
+                 include_empty_intent: bool = False):
         """graded=False: classical binary FCA + containment matching.
         graded=True: still classical FCA lattice, but EXTENSION matching mu (graded_mean_mu)."""
         self.annotator, self.graded = annotator, graded
         self.min_confidence, self.temperature, self.eps = min_confidence, temperature, eps
         self.top_support = top_support
+        self.include_empty_intent = include_empty_intent
         self.mu: MuFn = graded_mean_mu if graded else binary_containment_mu
         self.lattice: Optional[ConceptLattice] = None
         self.scorer: Optional[ConceptScorer] = None
@@ -77,7 +80,8 @@ class MPRIClassifier:
                  for a in anns}
         labels = {p.patent_id: p.label for p in patents}
         self.scorer = ConceptScorer.fit(self.lattice.concepts, attrs, labels, self.mu,
-                                        temperature=self.temperature, eps=self.eps)
+                                        temperature=self.temperature, eps=self.eps,
+                                        include_empty_intent=self.include_empty_intent)
         return self
 
     def predict(self, patent: Patent, annotation: Optional[Annotation] = None) -> Prediction:
@@ -101,12 +105,15 @@ class MPRIClassifier:
                 cues = tuple(c for c in ann.cues if c.attribute in s.concepts[i].intent)
                 items.append(SupportingConcept(intent, ds[i][pred], cues))
             sup = tuple(items)
-        return Prediction(patent.patent_id, s.scores(attrs), s.probabilities(attrs), pred, sup)
+        return Prediction(patent.patent_id, s.raw_scores(attrs), s.softmax_scores(attrs), pred,
+                          supporting=sup)
 
     def shared_concepts(self, min_categories: int = 2, min_rho: float = 0.0) -> List[Tuple[FormalConcept, List[str]]]:
         """Concepts with rho(c,k) > min_rho for >= min_categories categories (overlap retained)."""
         out = []
         for c, r in zip(self.scorer.concepts, self.scorer.rho):
+            if not c.intent and not self.include_empty_intent:
+                continue
             ks = [k for k in LABELS if r[k] > min_rho]
             if len(ks) >= min_categories:
                 out.append((c, ks))

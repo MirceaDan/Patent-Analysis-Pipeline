@@ -143,12 +143,12 @@ def test_rho_and_scores_hand_computed():
     assert by_intent[frozenset("a")]["P"] == pytest.approx(0.5)
     assert by_intent[frozenset("ab")]["P"] == pytest.approx(1.0)
     assert by_intent[frozenset("ab")]["M"] == 0.0
-    s = sc.scores({"a": 1.0, "b": 1.0})  # matches both concepts: (0.5+..)/2
+    s = sc.raw_scores({"a": 1.0, "b": 1.0})  # matches both concepts: (0.5+..)/2
     assert s["M"] == pytest.approx(0.25) and s["P"] == pytest.approx(0.75) and s["R"] == 0 == s["I"]
     assert sc.predict({"a": 1.0, "b": 1.0}) == "P"
     d = sc.deltas({"a": 1.0, "b": 1.0})
     assert sum(x["P"] for x in d) == pytest.approx(1.5)  # Delta sums to numerator
-    probs = sc.probabilities({"a": 1.0, "b": 1.0})
+    probs = sc.softmax_scores({"a": 1.0, "b": 1.0})
     assert sum(probs.values()) == pytest.approx(1.0)
 
 
@@ -156,7 +156,7 @@ def test_weights_change_scores():
     lat, attrs, labels = _tiny()
     w = [0.0 if len(c.intent) == 1 else 1.0 for c in lat.concepts]
     sc = ConceptScorer.fit(lat.concepts, attrs, labels, weights=w, eps=1e-12)
-    assert sc.scores({"a": 1.0, "b": 1.0})["P"] == pytest.approx(1.0)
+    assert sc.raw_scores({"a": 1.0, "b": 1.0})["P"] == pytest.approx(1.0)
     with pytest.raises(ValueError): ConceptScorer.fit(lat.concepts, attrs, labels, weights=[-1] * len(lat.concepts))
 
 
@@ -164,7 +164,7 @@ def test_abstain_when_nothing_matches():
     c = FormalConcept(frozenset({"p"}), frozenset({"a"}))
     sc = ConceptScorer([c], [{k: 0.25 for k in LABELS}])
     assert sc.predict({"zzz": 1.0}) is None
-    assert sc.scores({"zzz": 1.0}) == {k: 0.0 for k in LABELS}
+    assert sc.raw_scores({"zzz": 1.0}) == {k: 0.0 for k in LABELS}
 
 
 def test_graded_mu_reduces_to_binary_and_is_partial():
@@ -194,15 +194,15 @@ def test_deterministic_fit_and_ties():
     d1 = {tuple(k(c)): r for c, r in zip(r1.scorer.concepts, r1.scorer.rho)}
     d2 = {tuple(k(c)): r for c, r in zip(r2.scorer.concepts, r2.scorer.rho)}
     assert d1 == d2
-    assert r1.predict(ps[0]).scores == r1.predict(ps[0]).scores
-    tied = ConceptScorer([FormalConcept(frozenset(), frozenset())], [{k: 0.25 for k in LABELS}])
-    assert tied.predict({}) == "M"  # fixed tie-break
+    assert r1.predict(ps[0]).raw_scores == r1.predict(ps[0]).raw_scores
+    tied = ConceptScorer([FormalConcept(frozenset(), frozenset({"a"}))], [{k: 0.25 for k in LABELS}])
+    assert tied.predict({"a": 1.0}) == "M"  # fixed tie-break
 
 
 def test_eps_effect_small_and_validated():
     lat, attrs, labels = _tiny()
-    a = ConceptScorer.fit(lat.concepts, attrs, labels, eps=1e-9).scores({"a": 1.0, "b": 1.0})
-    b = ConceptScorer.fit(lat.concepts, attrs, labels, eps=1e-12).scores({"a": 1.0, "b": 1.0})
+    a = ConceptScorer.fit(lat.concepts, attrs, labels, eps=1e-9).raw_scores({"a": 1.0, "b": 1.0})
+    b = ConceptScorer.fit(lat.concepts, attrs, labels, eps=1e-12).raw_scores({"a": 1.0, "b": 1.0})
     assert all(abs(a[k] - b[k]) < 1e-8 for k in LABELS)
     with pytest.raises(ValueError): compute_rho(lat.concepts, attrs, labels, eps=0)
 
@@ -297,26 +297,26 @@ def test_org_abstains_few_patents():
 
 
 def test_org_abstains_no_relations_or_single_node():
-    assert infer_organization(_g(3, [{"a"}, {"a"}, {"a"}])).abstained
-    assert infer_organization(_g(3, [{"a"}, {"b"}, {"c"}])).reason.startswith("no co-occurrence")
+    assert infer_organization(_g(3, [{"a"}, {"a"}, {"a"}]), allow_patent_only=True).abstained
+    assert infer_organization(_g(3, [{"a"}, {"b"}, {"c"}]), allow_patent_only=True).reason.startswith("no co-occurrence")
     assert infer_organization(CapabilityGraph("Empty")).abstained
 
 
 def test_org_abstains_on_indistinguishable():
     # all patents contain all concepts -> one component == single unit -> one distinct candidate
-    r = infer_organization(_g(3, [{"a", "b", "c"}] * 3))
+    r = infer_organization(_g(3, [{"a", "b", "c"}] * 3), allow_patent_only=True)
     assert r.abstained and "one distinct" in r.reason
     # margin threshold
     g = _g(4, [{"a", "b"}, {"a", "b"}, {"c", "d"}, {"c", "d"}])
-    assert not infer_organization(g).abstained
-    assert infer_organization(g, min_margin=10).abstained
+    assert not infer_organization(g, allow_patent_only=True).abstained
+    assert infer_organization(g, min_margin=10, allow_patent_only=True).abstained
 
 
 def test_org_modularity_hand_value_and_external_evidence():
     g = _g(4, [{"a", "b"}, {"a", "b"}, {"c", "d"}, {"c", "d"}])
     w = edge_weights(g)
     assert w == {("a", "b"): 2, ("c", "d"): 2}
-    q = modularity([frozenset("ab"), frozenset("cd")], w)
+    q = modularity([frozenset("ab"), frozenset("cd")], w, list("abcd"))
     assert q == pytest.approx(0.5)  # 2*(2/4 - (4/8)^2)
     assert modularity([frozenset("abcd")], w) == pytest.approx(0.0)
     ext = [ExternalEvidence("org-page", "different_unit", ("a", "c"))]
