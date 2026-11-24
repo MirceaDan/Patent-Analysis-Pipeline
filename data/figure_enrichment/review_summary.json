@@ -1,0 +1,18 @@
+{
+  "families_in_scope": 20,
+  "families_with_>=1_description": 20,
+  "figures_discovered": 186,
+  "figures_attempted": 96,
+  "attempted_status_counts": {
+    "described": 80,
+    "vlm_failed": 16
+  },
+  "generation_success_rate": 0.8333,
+  "failure_reasons": {
+    "truncated_output": 10,
+    "invalid_output": 6
+  },
+  "skipped_limit": 90,
+  "human_review_completed_rows": 0,
+  "note": "Review fields are blank; no semantic accuracy is claimed."
+}

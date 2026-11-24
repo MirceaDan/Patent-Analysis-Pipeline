@@ -1,0 +1,20 @@
+{
+  "annotated_families": 600,
+  "eligible_families": 38,
+  "excluded_families": 562,
+  "exclusion_reasons_by_family_status": {
+    "document_not_found": 6,
+    "no_figures_found": 556
+  },
+  "eligible_by_country": {
+    "DE": 2,
+    "US": 36
+  },
+  "document_resolution_status_counts": {
+    "document_not_found": 16,
+    "resolved_no_figures": 837,
+    "resolved_with_figures": 38
+  },
+  "eligible_total_figures": 408,
+  "definition": "eligible_families.csv + eligibility_summary.json\n             A family is eligible iff the existing resolver verified a document\n             (publication number [+ date]) that lists >=1 figure image and the\n             HEAD probe did not mark that image inaccessible. Country is never\n             used as a proxy; it is only reported."
+}
