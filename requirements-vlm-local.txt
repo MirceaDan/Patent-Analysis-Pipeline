@@ -1,0 +1,9 @@
+# Optional: only for `enrich_patent_figures.py --vlm-backend local`.
+# Not needed by the classifier, the master builder or the API backend.
+# Install a CUDA build of torch first, e.g.:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu132
+transformers>=4.49
+accelerate>=1.0
+qwen-vl-utils>=0.0.8
+# only for --local-4bit:
+bitsandbytes>=0.43
