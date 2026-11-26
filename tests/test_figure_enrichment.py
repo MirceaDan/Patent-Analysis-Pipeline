@@ -626,3 +626,60 @@ def test_make_vlm_local_requires_model(monkeypatch):
     a = efp.build_parser().parse_args(["--vlm-backend", "local"])
     with pytest.raises(efp.VlmError, match="local VLM not configured"):
         efp.make_vlm(a)
+
+
+def test_validate_normalises_evidence_case_but_rejects_other_values():
+    d = json.loads(json.dumps(GOOD))
+    d["components"][0]["evidence"] = " Visible "
+    d["relations"][0]["evidence"] = "INFERRED"
+    out = efp.validate_description(d)
+    assert out["components"][0]["evidence"] == "visible"
+    assert out["relations"][0]["evidence"] == "inferred"
+    d["components"][0]["evidence"] = "visible|inferred"
+    with pytest.raises(ValueError):
+        efp.validate_description(d)
+
+
+# ------------------------------------------- reliability regression (task: POC)
+def test_truncated_json_is_rejected_and_labelled_truncated_locally():
+    cut = json.dumps(GOOD)[:-25]                      # cut mid-string, no closing brace
+    v = _local(_fake_loader([cut]), max_new_tokens=5)  # fake generates 5 new tokens
+    with pytest.raises(efp.VlmError, match="truncated_output"):
+        v.describe(png(1), "image/png", "D1")
+
+
+def test_incomplete_or_placeholder_outputs_rejected():
+    for mutate in (lambda d: d.update(description="Too short."),
+                   lambda d: d["components"][0].update(name="..."),
+                   lambda d: d["relations"][0].update(source=" ")):
+        d = json.loads(json.dumps(GOOD))
+        mutate(d)
+        with pytest.raises(ValueError):
+            efp.validate_description(d)
+
+
+def test_max_new_tokens_not_in_hash_but_recorded_and_legacy_hash_accepted():
+    a, b = _local(None, max_new_tokens=1200), _local(None, max_new_tokens=2048)
+    assert a.config_hash == b.config_hash
+    assert json.loads(b.generation_config)["max_new_tokens"] == 2048
+    assert _local(None, max_new_tokens=1200).config_hash not in b.legacy_config_hashes
+    assert b._hash(max_new_tokens=1200) in b.legacy_config_hashes
+
+
+def test_resume_keeps_legacy_hash_descriptions_and_retries_failed(tmp_path):
+    routes = doc_route("US20240000001A1", n_figs=2)
+
+    class Legacy(FakeVLM):
+        legacy_config_hashes = ("old",)
+    pipe, _, state = make_pipe(tmp_path, routes, Legacy("old", fail_on={"D00001"}),
+                               max_attempts=3)
+    pubs = [pub("FL", "US2024000001", "AA", master=True)]
+    pipe.process_family("FL", pubs)
+    new = Legacy("new")
+    pipe2, _, st2 = make_pipe(tmp_path, routes, new, max_attempts=3)
+    pipe2.process_family("FL", pubs)
+    assert new.calls == ["D00001"]                    # only the failed figure re-run
+    by = {r["figure_id"]: r for r in st2.figures.values()}
+    assert by["D00000"]["vlm_config_hash"] == "old"
+    assert by["D00001"]["processing_status"] == "described" and by["D00001"]["attempts"] == 2
+    assert by["D00001"]["generation_config"] == ""   # fake has none; column exists

@@ -34,3 +34,29 @@ the 600 sampled families and are not propagated.
 
 `figure_enrichments.csv` `processing_status` values: pending, processed,
 failed, skipped. `image_source_url` is metadata only; images are not stored.
+
+## Enriched family dataset (figure descriptions integrated)
+
+```bash
+python scripts/build_master_dataset.py              # as above -> master_dataset/*
+python scripts/integrate_figure_descriptions.py     # -> patent_families_enriched.csv + figure_enrichment_integration.json
+python scripts/audit_training_dataset.py            # -> docs/TRAINING_DATASET_AUDIT.md + master_dataset/training_dataset_audit.json
+```
+
+`patent_families_enriched.csv` = `patent_families_annotated.csv` (same 28,311 rows and order, all original columns,
+labels and `label_M/P/R/I` aliases untouched, `U` preserved) + five columns:
+
+| Column | Meaning |
+|---|---|
+| `image_descriptions` | usable VLM descriptions joined by `\n` (master publication first, natural figure order); `""` if none |
+| `n_image_descriptions` | number of lines in `image_descriptions` |
+| `image_description_provenance` | JSON list aligned with the lines: publication, kind, figure id, source document id/url, image url, image sha256, VLM model + revision, prompt version, config hash, timestamp |
+| `figure_enrichment_status` | `described`, `vlm_failed`, `image_inaccessible`, `figures_discovered_not_processed`, `no_figures_listed_by_source`, `document_not_found`, `document_inaccessible`, `not_enriched` |
+| `figure_enrichment_detail` | JSON: publications total/examined, resolution and figure status counts |
+
+Lineage: Google Patents crawl (`scripts/enrich_patent_figures.py`, `docker/run.sh`) -> `data/figure_enrichment/{figure_enrichments,document_resolution}.csv`
+-> `integrate_figure_descriptions.py` (joined on family only; one row per family by construction, checked) -> enriched CSV.
+`no_figures_listed_by_source` means Google Patents lists no figures (true for every CN page), not that the patent has none.
+`not_enriched` = outside the crawl scope (all 27,711 unannotated families). Status is derived from the resolution and figure
+tables, not `family_summary.csv`, which only reflects the last crawler run. 30 descriptions from the first pilot have no
+recorded model revision (see the audit warning).

@@ -35,7 +35,7 @@ class LocalTransformersVLM:
     def __init__(self, model_id, system_prompt, user_prompt, parser, error_cls,
                  prompt_version, image_prep_version, revision=None,
                  dtype="bfloat16", device="auto", load_in_4bit=False,
-                 max_new_tokens=1200, max_retries=1, loader=None):
+                 max_new_tokens=2048, max_retries=0, loader=None):
         self.model, self.revision = model_id, revision
         self.system_prompt, self.user_prompt = system_prompt, user_prompt
         self.parser, self.error_cls = parser, error_cls
@@ -45,15 +45,37 @@ class LocalTransformersVLM:
         self._loader, self._loaded = loader, None
         self.model_version = revision or ""
 
-    @property
-    def config_hash(self):
+    def _hash(self, revision="self", **extra):
         cfg = {"backend": "local-transformers", "model": self.model,
-               "revision": self.revision, "dtype": self.dtype,
+               "revision": self.revision if revision == "self" else revision, "dtype": self.dtype,
                "4bit": self.load_in_4bit, "prompt": self.prompt_version,
-               "max_new_tokens": self.max_new_tokens, "greedy": True,
-               "image_prep": self.image_prep_version}
+               "greedy": True, "image_prep": self.image_prep_version, **extra}
         return hashlib.sha256(json.dumps(cfg, sort_keys=True).encode()
                               ).hexdigest()[:16]
+
+    @property
+    def config_hash(self):
+        # max_new_tokens is only a truncation limit: with greedy decoding an
+        # output that finished under the limit is identical for any larger
+        # limit, so it is recorded in generation_config but not hashed.
+        return self._hash()
+
+    @property
+    def legacy_config_hashes(self):
+        """Hash formula used by the 8-family pilot (max_new_tokens=1200 hashed);
+        results under it stay valid, so resume does not regenerate them."""
+        # The pilot ran unpinned (revision None) but resolved to the cached
+        # snapshot; a pinned run is accepted as the same weights.
+        return (self._hash(max_new_tokens=1200),
+                self._hash(revision=None, max_new_tokens=1200))
+
+    @property
+    def generation_config(self):
+        return json.dumps({"backend": "local-transformers", "greedy": True,
+                           "max_new_tokens": self.max_new_tokens,
+                           "max_retries": self.max_retries, "dtype": self.dtype,
+                           "4bit": self.load_in_4bit,
+                           "image_prep": self.image_prep_version}, sort_keys=True)
 
     def _load(self):
         if self._loaded:
@@ -100,6 +122,7 @@ class LocalTransformersVLM:
         for _ in range(self.max_retries + 1):
             try:
                 text, n_in, n_out = self._generate(mdl, proc, messages, img)
+                truncated = n_out >= self.max_new_tokens
             except self.error_cls:
                 raise
             except Exception as e:            # e.g. CUDA OOM
@@ -111,7 +134,8 @@ class LocalTransformersVLM:
                 return self.parser(text), {"prompt_tokens": n_in,
                                            "completion_tokens": n_out}
             except ValueError as e:
-                last = f"invalid_output: {e}"
+                last = (f"truncated_output: hit max_new_tokens={self.max_new_tokens} ({e})"
+                        if truncated else f"invalid_output: {e}")
         raise self.error_cls(f"gave up after {self.max_retries + 1} attempts: {last}")
 
     def _generate(self, mdl, proc, messages, img):

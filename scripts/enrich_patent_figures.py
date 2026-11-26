@@ -86,7 +86,7 @@ FIGURE_COLUMNS = [  # first 14 equal master_dataset/figure_enrichments.csv
     "image_sha256", "image_bytes", "figure_callout_labels",
     "publication_role", "match_verification", "vlm_config_hash",
     "vlm_prompt_tokens", "vlm_completion_tokens", "attempts",
-    "reused_from", "description_json",
+    "reused_from", "description_json", "generation_config",
 ]
 RESOLUTION_COLUMNS = [
     "family_number", "publication_number", "kind_code", "publication_role",
@@ -224,9 +224,21 @@ def parse_document_page(html: str) -> dict | None:
                         "callout_labels": labels})
     pdf = soup.find("meta", attrs={"name": "citation_pdf_url"})
     return {"document_id": doc_id, "publication_date": date,
+            "text": _page_text(soup),
             "pdf_url": pdf["content"] if pdf and pdf.get("content") else "",
             "application_number": app["content"] if app else None,
             "figures": figures}
+
+
+def _page_text(soup) -> dict:
+    """Title, abstract and description text of a Google Patents page (empty if absent)."""
+    def sec(name):
+        el = soup.find(attrs={"itemprop": name})
+        return " ".join(el.get_text(" ", strip=True).split()) if el else ""
+    t = soup.find("meta", attrs={"name": "DC.title"})
+    title = " ".join(t["content"].split()) if t and t.get("content") else sec("title")
+    return {"title": title, "abstract": sec("abstract"), "description": sec("description"),
+            "claims": sec("claims")}
 
 
 def verify_document(page: dict, requested_id: str, dataset_pub_date: str):
@@ -388,12 +400,28 @@ Return JSON with exactly these keys:
 }}"""
 
 EVIDENCE_VALUES = {"visible", "inferred"}
+DEFAULT_MAX_NEW_TOKENS = 2048
 
 
 class VlmError(Exception):
     def __init__(self, msg, permanent=False):
         super().__init__(msg)
         self.permanent = permanent
+
+
+_PLACEHOLDERS = {"", "...", "…", "null", "none", "n/a",
+                 "component/entity as shown", "reference numeral or text label"}
+
+
+def _is_placeholder(v: str) -> bool:
+    return v.strip().lower() in _PLACEHOLDERS
+
+
+def _norm_evidence(d):
+    """Case/whitespace-normalise the evidence enum ("Visible" -> "visible");
+    any other value is still rejected."""
+    if isinstance(d, dict) and isinstance(d.get("evidence"), str):
+        d["evidence"] = d["evidence"].strip().lower()
 
 
 def validate_description(obj) -> dict:
@@ -406,6 +434,8 @@ def validate_description(obj) -> dict:
             raise ValueError(f"missing or empty string field {k!r}")
     if len(obj["description"]) > 4000:
         raise ValueError("description too long")
+    if len(obj["description"].split()) < 5:
+        raise ValueError("description too short to be informative")
     if obj.get("process_or_mechanism") is not None and not isinstance(
             obj["process_or_mechanism"], str):
         raise ValueError("process_or_mechanism must be string or null")
@@ -415,6 +445,9 @@ def validate_description(obj) -> dict:
     for c in obj["components"]:
         if not isinstance(c, dict) or not isinstance(c.get("name"), str):
             raise ValueError("component needs a string 'name'")
+        if _is_placeholder(c["name"]):
+            raise ValueError("component name is empty or a prompt placeholder")
+        _norm_evidence(c)
         if c.get("evidence") not in EVIDENCE_VALUES:
             raise ValueError("component evidence must be visible|inferred")
         if c.get("label") is not None and not isinstance(c["label"], str):
@@ -423,6 +456,9 @@ def validate_description(obj) -> dict:
         if not isinstance(r, dict) or not all(
                 isinstance(r.get(k), str) for k in ("source", "target", "relation")):
             raise ValueError("relation needs string source/target/relation")
+        if any(_is_placeholder(r[k]) for k in ("source", "target", "relation")):
+            raise ValueError("relation field is empty or a prompt placeholder")
+        _norm_evidence(r)
         if r.get("evidence") not in EVIDENCE_VALUES:
             raise ValueError("relation evidence must be visible|inferred")
     for k in ("text_in_figure", "uncertainties"):
@@ -446,7 +482,7 @@ def parse_vlm_text(text: str) -> dict:
 class OpenAICompatibleVLM:
     """Chat-completions client with image input. Config from environment."""
 
-    def __init__(self, base_url, model, api_key, timeout=120, max_tokens=1200,
+    def __init__(self, base_url, model, api_key, timeout=120, max_tokens=DEFAULT_MAX_NEW_TOKENS,
                  json_mode=True, max_retries=3, backoff=4.0,
                  sleep=time.sleep, session=None):
         import requests
@@ -472,11 +508,19 @@ class OpenAICompatibleVLM:
 
     @property
     def config_hash(self):
+        # max_tokens is a truncation limit, recorded in generation_config but
+        # not hashed: a finished temperature-0 output does not depend on it.
         cfg = {"model": self.model, "prompt": PROMPT_VERSION,
-               "max_tokens": self.max_tokens, "json_mode": self.json_mode,
+               "json_mode": self.json_mode,
                "temperature": 0, "image_prep": IMAGE_PREP_VERSION}
         return hashlib.sha256(json.dumps(cfg, sort_keys=True).encode()
                               ).hexdigest()[:16]
+
+    @property
+    def generation_config(self):
+        return json.dumps({"backend": "openai-compatible", "temperature": 0,
+                           "max_tokens": self.max_tokens, "json_mode": self.json_mode,
+                           "image_prep": IMAGE_PREP_VERSION}, sort_keys=True)
 
     def describe(self, image_bytes: bytes, mime: str, figure_id: str):
         """Return (validated_dict, usage_dict). Retries transient errors and
@@ -624,7 +668,12 @@ class Pipeline:
     def __init__(self, state, http, vlm=None, dry_run=False,
                  max_publications=4, max_figures=10, max_attempts=3,
                  max_image_bytes=8_000_000, max_retries=3, backoff=2.0,
-                 sleep=time.sleep, abort_after_vlm_failures=5):
+                 sleep=time.sleep, abort_after_vlm_failures=5,
+                 document_sink=None, image_sink=None):
+        # Optional opt-in hooks (None = disabled, default behaviour unchanged):
+        #   document_sink(family, pub, document_id, url, page, retrieved_at_utc)
+        #   image_sink(family, res, fig, raw_bytes, sha256)
+        self.document_sink, self.image_sink = document_sink, image_sink
         self.state, self.http, self.vlm = state, http, vlm
         self.dry_run = dry_run
         self.max_publications, self.max_figures = max_publications, max_figures
@@ -699,6 +748,8 @@ class Pipeline:
                         resolution_status=("resolved_with_figures" if page["figures"]
                                            else "resolved_no_figures"))
             self.state.put_resolution(base)
+            if self.document_sink:
+                self.document_sink(family, pub, cid, url, page, base["resolved_at_utc"])
             self._inc("documents_resolved")
             return base
         if errors:
@@ -729,7 +780,11 @@ class Pipeline:
             "match_verification": res["match_verification"],
             "vlm_config_hash": "", "vlm_prompt_tokens": "",
             "vlm_completion_tokens": "", "attempts": 0, "reused_from": "",
-            "description_json": ""}
+            "description_json": "",
+            "generation_config": getattr(self.vlm, "generation_config", ""),
+            "vlm_model": getattr(self.vlm, "model", ""),
+            "vlm_model_version": getattr(self.vlm, "model_version", ""),
+            "prompt_version": PROMPT_VERSION if self.vlm else ""}
         row.update(kw)
         return row
 
@@ -737,8 +792,9 @@ class Pipeline:
         key = (family, res["document_id"], fig["figure_id"])
         prev = self.state.figures.get(key)
         cfg = self.vlm.config_hash if self.vlm else ""
+        ok_hashes = {cfg, *getattr(self.vlm, "legacy_config_hashes", ())}
         if prev and prev["processing_status"] == "described" and \
-                prev["vlm_config_hash"] == cfg and \
+                prev["vlm_config_hash"] in ok_hashes and \
                 prev["image_source_url"] == fig["url"]:
             self._inc("skipped_resume")
             return prev
@@ -781,6 +837,8 @@ class Pipeline:
             return row
         sha = hashlib.sha256(raw).hexdigest()
         row.update(image_sha256=sha, image_bytes=len(raw))
+        if self.image_sink:
+            self.image_sink(family, res, fig, raw, sha)
         # identical image (checksum) already described with this config?
         with self.state.lock:
             twin = next((r for r in self.state.figures.values()
@@ -800,6 +858,7 @@ class Pipeline:
         except VlmError as e:
             row.update(processing_status="vlm_failed", error_details=str(e)[:300],
                        vlm_model=self.vlm.model, prompt_version=PROMPT_VERSION,
+                       vlm_model_version=getattr(self.vlm, "model_version", ""),
                        vlm_config_hash=cfg)
             self.state.put_figure(row)
             self._inc("failed")
@@ -936,6 +995,29 @@ def select_families(grouped, family_ids=None, sample=None, seed=0,
     return {f: grouped[f] for f in fams}
 
 
+def make_raw_sinks(raw_dir: Path) -> dict:
+    """Hooks that persist raw figure bytes and extracted page text (opt-in)."""
+    (raw_dir / "figures").mkdir(parents=True, exist_ok=True)
+    (raw_dir / "documents").mkdir(parents=True, exist_ok=True)
+
+    def doc_sink(family, pub, doc_id, url, page, retrieved_at):
+        rec = {"family_number": family, "publication_number": pub["publication_number"],
+               "kind_code": pub["kind_code"], "document_id": doc_id, "source_url": url,
+               "retrieved_at_utc": retrieved_at, "publication_date": page.get("publication_date"),
+               "application_number": page.get("application_number"),
+               "n_figures_listed": len(page["figures"]), "figures": page["figures"],
+               "text": page.get("text", {})}
+        (raw_dir / "documents" / f"{doc_id}.json").write_text(
+            json.dumps(rec, indent=2, ensure_ascii=False) + "\n")
+
+    def img_sink(family, res, fig, raw, sha):
+        ext = {b"\x89PNG": "png", b"\xff\xd8\xff": "jpg", b"GIF8": "gif"}
+        e = next((v for k, v in ext.items() if raw.startswith(k)), "bin")
+        (raw_dir / "figures" / f"{res['document_id']}-{fig['figure_id']}.{e}").write_bytes(raw)
+
+    return {"document_sink": doc_sink, "image_sink": img_sink}
+
+
 def make_vlm(a):
     if a.vlm_backend == "api":
         return OpenAICompatibleVLM.from_env(a.api_key_env,
@@ -993,6 +1075,9 @@ def build_parser():
                    help="seconds between requests to the image host")
     p.add_argument("--workers", type=int, default=1, help="1-4 families at once")
     p.add_argument("--timeout", type=float, default=30)
+    p.add_argument("--save-raw-dir", default=None,
+                   help="opt-in: also save the raw figure files and the extracted page text "
+                        "(documents/<doc>.json, figures/<doc>-<fig>.<ext>) under this directory")
     p.add_argument("--dry-run", action="store_true",
                    help="discover documents/figures only; no image download, no VLM")
     p.add_argument("--summarize-only", action="store_true")
@@ -1043,7 +1128,8 @@ def main(argv=None):
     limiter = RateLimiter({"patents.google.com": a.page_delay,
                            "patentimages.storage.googleapis.com": a.image_delay})
     http = RequestsHttp(limiter, timeout=a.timeout)
-    pipe = Pipeline(state, http, vlm, dry_run=a.dry_run,
+    sinks = make_raw_sinks(Path(a.save_raw_dir)) if a.save_raw_dir else {}
+    pipe = Pipeline(state, http, vlm, dry_run=a.dry_run, **sinks,
                     max_publications=a.max_publications_per_family,
                     max_figures=a.max_figures_per_family,
                     max_attempts=a.max_attempts, max_retries=a.max_retries)
