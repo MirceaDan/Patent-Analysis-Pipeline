@@ -1,0 +1,841 @@
+{
+  "model_predictions": {
+    "A_title_abstract": {
+      "note": "PRIMARY. Checkpoint A (text-only), fed exactly its training input format",
+      "text_passed_to_classifier": "A method and apparatus for optimizing dynamically industrial production processes . Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant; a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component; and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+      "checkpoint": {
+        "path": "experiments/baseline_v1/checkpoints/A_repeat01.joblib",
+        "sha256": "951788ddae2d247b643001837912c9e367170efea256f5a7e64ccbcba5f74aa8"
+      },
+      "repeat": 1,
+      "seed": 2027,
+      "trained_on_this_family": null,
+      "scores_are": "raw uncalibrated logistic-regression outputs; NOT calibrated probabilities; threshold 0.5",
+      "per_label": {
+        "M": {
+          "raw_score": 0.47414927171837756,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "models",
+              "contribution": 0.0465
+            },
+            {
+              "term": "detected",
+              "contribution": 0.0396
+            },
+            {
+              "term": "production",
+              "contribution": 0.0394
+            },
+            {
+              "term": "dynamic",
+              "contribution": 0.0377
+            },
+            {
+              "term": "including",
+              "contribution": 0.0317
+            },
+            {
+              "term": "process",
+              "contribution": 0.029
+            }
+          ],
+          "bias": -0.07660636763719705,
+          "decision_value": -0.10349519457034607,
+          "evidence": [
+            {
+              "source": "abstract",
+              "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+              "matched_term": "models"
+            },
+            {
+              "source": "abstract",
+              "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+              "matched_term": "detected"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "production"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "dynamic"
+            },
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "including"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "process"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        },
+        "P": {
+          "raw_score": 0.4185288562024597,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "process",
+              "contribution": 0.0614
+            },
+            {
+              "term": "models",
+              "contribution": 0.0407
+            },
+            {
+              "term": "optimization",
+              "contribution": 0.0341
+            },
+            {
+              "term": "dynamically",
+              "contribution": 0.0295
+            },
+            {
+              "term": "dynamic",
+              "contribution": 0.026
+            },
+            {
+              "term": "process optimization",
+              "contribution": 0.0238
+            }
+          ],
+          "bias": -0.3598416383708038,
+          "decision_value": -0.32881550793967135,
+          "evidence": [
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "process"
+            },
+            {
+              "source": "abstract",
+              "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+              "matched_term": "models"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "optimization"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "dynamically"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "dynamic"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "process optimization"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        },
+        "R": {
+          "raw_score": 0.4366512124409392,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "production",
+              "contribution": 0.1868
+            },
+            {
+              "term": "optimization",
+              "contribution": 0.1087
+            },
+            {
+              "term": "plant",
+              "contribution": 0.0525
+            },
+            {
+              "term": "process",
+              "contribution": 0.0401
+            },
+            {
+              "term": "production process",
+              "contribution": 0.0397
+            },
+            {
+              "term": "process optimization",
+              "contribution": 0.0378
+            }
+          ],
+          "bias": -0.4531715458660156,
+          "decision_value": -0.2547642168653401,
+          "evidence": [
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "production"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "optimization"
+            },
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "plant"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "process"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "production process"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "process optimization"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        },
+        "I": {
+          "raw_score": 0.39826785578713836,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "plant",
+              "contribution": 0.0828
+            },
+            {
+              "term": "production",
+              "contribution": 0.0789
+            },
+            {
+              "term": "optimization",
+              "contribution": 0.0344
+            },
+            {
+              "term": "perform",
+              "contribution": 0.025
+            },
+            {
+              "term": "process optimization",
+              "contribution": 0.0229
+            },
+            {
+              "term": "depending",
+              "contribution": 0.019
+            }
+          ],
+          "bias": -0.48715432814973253,
+          "decision_value": -0.4126876197154624,
+          "evidence": [
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "plant"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "production"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "optimization"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "perform"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "process optimization"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "depending"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        }
+      }
+    },
+    "A_title_abstract_figdesc": {
+      "note": "SENSITIVITY. Checkpoint A fed figure descriptions it never saw in training (out-of-distribution)",
+      "text_passed_to_classifier": "A method and apparatus for optimizing dynamically industrial production processes . Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant; a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component; and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component. . The figure presents a simple flowchart with three labeled steps or processes (S1, S2, S3), each connected by arrows indicating a sequential order.",
+      "checkpoint": {
+        "path": "experiments/baseline_v1/checkpoints/A_repeat01.joblib",
+        "sha256": "951788ddae2d247b643001837912c9e367170efea256f5a7e64ccbcba5f74aa8"
+      },
+      "repeat": 1,
+      "seed": 2027,
+      "trained_on_this_family": null,
+      "scores_are": "raw uncalibrated logistic-regression outputs; NOT calibrated probabilities; threshold 0.5",
+      "per_label": {
+        "M": {
+          "raw_score": 0.46512886716275414,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "models",
+              "contribution": 0.0446
+            },
+            {
+              "term": "detected",
+              "contribution": 0.0379
+            },
+            {
+              "term": "production",
+              "contribution": 0.0377
+            },
+            {
+              "term": "dynamic",
+              "contribution": 0.0361
+            },
+            {
+              "term": "including",
+              "contribution": 0.0303
+            },
+            {
+              "term": "process",
+              "contribution": 0.0277
+            }
+          ],
+          "bias": -0.07660636763719705,
+          "decision_value": -0.1397113438037354,
+          "evidence": [
+            {
+              "source": "abstract",
+              "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+              "matched_term": "models"
+            },
+            {
+              "source": "abstract",
+              "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+              "matched_term": "detected"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "production"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "dynamic"
+            },
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "including"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "process"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        },
+        "P": {
+          "raw_score": 0.4147163361293773,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "process",
+              "contribution": 0.0588
+            },
+            {
+              "term": "models",
+              "contribution": 0.039
+            },
+            {
+              "term": "optimization",
+              "contribution": 0.0327
+            },
+            {
+              "term": "dynamically",
+              "contribution": 0.0282
+            },
+            {
+              "term": "dynamic",
+              "contribution": 0.0249
+            },
+            {
+              "term": "process optimization",
+              "contribution": 0.0228
+            }
+          ],
+          "bias": -0.3598416383708038,
+          "decision_value": -0.3445018660931085,
+          "evidence": [
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "process"
+            },
+            {
+              "source": "abstract",
+              "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+              "matched_term": "models"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "optimization"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "dynamically"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "dynamic"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "process optimization"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        },
+        "R": {
+          "raw_score": 0.42895569153624663,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "production",
+              "contribution": 0.1789
+            },
+            {
+              "term": "optimization",
+              "contribution": 0.1041
+            },
+            {
+              "term": "plant",
+              "contribution": 0.0503
+            },
+            {
+              "term": "process",
+              "contribution": 0.0384
+            },
+            {
+              "term": "production process",
+              "contribution": 0.0381
+            },
+            {
+              "term": "process optimization",
+              "contribution": 0.0362
+            }
+          ],
+          "bias": -0.4531715458660156,
+          "decision_value": -0.2861131741938615,
+          "evidence": [
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "production"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "optimization"
+            },
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "plant"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "process"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "production process"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "process optimization"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        },
+        "I": {
+          "raw_score": 0.3945809749770161,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "plant",
+              "contribution": 0.0793
+            },
+            {
+              "term": "production",
+              "contribution": 0.0756
+            },
+            {
+              "term": "optimization",
+              "contribution": 0.033
+            },
+            {
+              "term": "perform",
+              "contribution": 0.024
+            },
+            {
+              "term": "process optimization",
+              "contribution": 0.0219
+            },
+            {
+              "term": "depending",
+              "contribution": 0.0182
+            }
+          ],
+          "bias": -0.48715432814973253,
+          "decision_value": -0.42809644264828517,
+          "evidence": [
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "plant"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "production"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "optimization"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "perform"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "process optimization"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "depending"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        }
+      }
+    },
+    "C_title_abstract_figdesc": {
+      "note": "WEAK. Checkpoint C (text+descriptions) was trained on only ~8-13 families; not credible",
+      "text_passed_to_classifier": "A method and apparatus for optimizing dynamically industrial production processes . Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant; a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component; and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component. . The figure presents a simple flowchart with three labeled steps or processes (S1, S2, S3), each connected by arrows indicating a sequential order.",
+      "checkpoint": {
+        "path": "experiments/baseline_v1/checkpoints/C_repeat01.joblib",
+        "sha256": "d4731966332e088f37fdc3b0e50db47490ec43b33d71bcb65af7e4b156a7a14d"
+      },
+      "repeat": 1,
+      "seed": 2027,
+      "trained_on_this_family": false,
+      "scores_are": "raw uncalibrated logistic-regression outputs; NOT calibrated probabilities; threshold 0.5",
+      "per_label": {
+        "M": {
+          "raw_score": 0.4985740473334072,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "physical",
+              "contribution": 0.7801
+            },
+            {
+              "term": "models",
+              "contribution": 0.3589
+            },
+            {
+              "term": "process",
+              "contribution": 0.277
+            },
+            {
+              "term": "connected",
+              "contribution": 0.098
+            },
+            {
+              "term": "indicating",
+              "contribution": 0.0624
+            },
+            {
+              "term": "steps",
+              "contribution": 0.0438
+            }
+          ],
+          "bias": -0.25616570362831,
+          "decision_value": -0.005703826130169398,
+          "evidence": [
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "physical"
+            },
+            {
+              "source": "abstract",
+              "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+              "matched_term": "models"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "process"
+            },
+            {
+              "source": "figure D00002",
+              "text": "The figure presents a simple flowchart with three labeled steps or processes (S1, S2, S3), each connected by arrows indicating a sequential order.",
+              "matched_term": "connected"
+            },
+            {
+              "source": "figure D00002",
+              "text": "The figure presents a simple flowchart with three labeled steps or processes (S1, S2, S3), each connected by arrows indicating a sequential order.",
+              "matched_term": "indicating"
+            },
+            {
+              "source": "figure D00002",
+              "text": "The figure presents a simple flowchart with three labeled steps or processes (S1, S2, S3), each connected by arrows indicating a sequential order.",
+              "matched_term": "steps"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        },
+        "P": {
+          "raw_score": 0.28923405312372824,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "models",
+              "contribution": 0.5521
+            },
+            {
+              "term": "processes",
+              "contribution": 0.2082
+            },
+            {
+              "term": "model",
+              "contribution": 0.2009
+            },
+            {
+              "term": "process",
+              "contribution": 0.1883
+            },
+            {
+              "term": "including",
+              "contribution": 0.1729
+            },
+            {
+              "term": "component",
+              "contribution": 0.1291
+            }
+          ],
+          "bias": -1.5851250528945926,
+          "decision_value": -0.8991069542246191,
+          "evidence": [
+            {
+              "source": "abstract",
+              "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+              "matched_term": "models"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "processes"
+            },
+            {
+              "source": "abstract",
+              "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+              "matched_term": "model"
+            },
+            {
+              "source": "title",
+              "text": "A method and apparatus for optimizing dynamically industrial production processes",
+              "matched_term": "process"
+            },
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "including"
+            },
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "component"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        },
+        "R": {
+          "raw_score": 0.0,
+          "predicted": "N",
+          "top_terms": [],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions.",
+          "evidence": []
+        },
+        "I": {
+          "raw_score": 0.10274467717213881,
+          "predicted": "N",
+          "top_terms": [
+            {
+              "term": "physical",
+              "contribution": 0.5067
+            },
+            {
+              "term": "model",
+              "contribution": 0.2156
+            },
+            {
+              "term": "steps",
+              "contribution": 0.1695
+            },
+            {
+              "term": "provided",
+              "contribution": 0.141
+            },
+            {
+              "term": "perform",
+              "contribution": 0.1324
+            },
+            {
+              "term": "flowchart",
+              "contribution": 0.0603
+            }
+          ],
+          "bias": -2.138431715735149,
+          "decision_value": -2.1670934140330096,
+          "evidence": [
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "physical"
+            },
+            {
+              "source": "abstract",
+              "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+              "matched_term": "model"
+            },
+            {
+              "source": "figure D00002",
+              "text": "The figure presents a simple flowchart with three labeled steps or processes (S1, S2, S3), each connected by arrows indicating a sequential order.",
+              "matched_term": "steps"
+            },
+            {
+              "source": "abstract",
+              "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+              "matched_term": "provided"
+            },
+            {
+              "source": "abstract",
+              "text": "and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+              "matched_term": "perform"
+            },
+            {
+              "source": "figure D00002",
+              "text": "The figure presents a simple flowchart with three labeled steps or processes (S1, S2, S3), each connected by arrows indicating a sequential order.",
+              "matched_term": "flowchart"
+            }
+          ],
+          "explanation": "raw logistic-regression score (uncalibrated; class_weight=balanced so it is not a prior-adjusted probability) = sigmoid(bias + sum of tf-idf*weight); evidence = sentences containing the highest-contributing terms. Terms are statistical, not definitions."
+        }
+      }
+    }
+  },
+  "keyword_baseline": {
+    "note": "EXPERIMENTAL transparent rule baseline; unvalidated cue lexicon (see CUES in this script)",
+    "text_scope": "title + abstract + figure descriptions",
+    "per_label": {
+      "M": {
+        "raw_score": 0.14285714285714285,
+        "distinct_cues_matched": [
+          "detect",
+          "digital twin",
+          "monitor"
+        ],
+        "predicted": "Y",
+        "evidence": [
+          {
+            "source": "abstract",
+            "text": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant;",
+            "matched_cues": [
+              "monitor",
+              "detect"
+            ]
+          },
+          {
+            "source": "abstract",
+            "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+            "matched_cues": [
+              "detect",
+              "digital twin"
+            ]
+          }
+        ],
+        "explanation": "3 distinct cue terms of the M lexicon matched (rule: >= 2 => Y): ['detect', 'digital twin', 'monitor']"
+      },
+      "P": {
+        "raw_score": 0.0,
+        "distinct_cues_matched": [],
+        "predicted": "N",
+        "evidence": [],
+        "explanation": "0 distinct cue terms of the P lexicon matched (rule: >= 2 => Y): []"
+      },
+      "R": {
+        "raw_score": 0.0,
+        "distinct_cues_matched": [],
+        "predicted": "N",
+        "evidence": [],
+        "explanation": "0 distinct cue terms of the R lexicon matched (rule: >= 2 => Y): []"
+      },
+      "I": {
+        "raw_score": 0.0625,
+        "distinct_cues_matched": [
+          "automatically"
+        ],
+        "predicted": "N",
+        "evidence": [
+          {
+            "source": "abstract",
+            "text": "a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component;",
+            "matched_cues": [
+              "automatically"
+            ]
+          }
+        ],
+        "explanation": "1 distinct cue terms of the I lexicon matched (rule: >= 2 => Y): ['automatically']"
+      }
+    }
+  },
+  "checkpoint_split_check": {
+    "experiment": "experiments/baseline_v1",
+    "repeat": 1,
+    "seed": 2027,
+    "family_split_in_that_repeat_for_A": "test (never used for fitting or C selection)",
+    "family_in_image_subset_used_to_train_C": false,
+    "checkpoint_config_sha256": "a03ca563d0fa7436455353c9dc03f9da404867f58c6fa3b6a78bdb9696bf3c81"
+  }
+}

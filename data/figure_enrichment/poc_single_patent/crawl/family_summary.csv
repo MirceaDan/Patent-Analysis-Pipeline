@@ -1,0 +1,2 @@
+family_number,family_status,n_publications_examined,publications_examined,publication_used,n_figures_discovered,n_figures_described,n_figures_failed,n_figures_pending,n_figures_skipped_limit,has_usable_description,failure_reason
+75198509,described,1,US2021063996 AA=resolved_with_figures,US2021063996 AA,3,1,2,0,0,True,

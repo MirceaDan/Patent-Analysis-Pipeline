@@ -1,0 +1,23 @@
+{
+  "family_number": "75198509",
+  "document_id": "US20210063996A1",
+  "title": "A method and apparatus for optimizing dynamically industrial production processes",
+  "abstract": "Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant; a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component; and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+  "figure_descriptions": [
+    {
+      "figure_id": "D00002",
+      "text": "The figure presents a simple flowchart with three labeled steps or processes (S1, S2, S3), each connected by arrows indicating a sequential order."
+    }
+  ],
+  "text_title_abstract": "A method and apparatus for optimizing dynamically industrial production processes . Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant; a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component; and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+  "text_title_abstract_figdesc": "A method and apparatus for optimizing dynamically industrial production processes . Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant; a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component; and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component. . The figure presents a simple flowchart with three labeled steps or processes (S1, S2, S3), each connected by arrows indicating a sequential order.",
+  "fields_NOT_provided": [
+    "human labels",
+    "family id",
+    "assignee/company",
+    "adm_* / ann_* fields",
+    "claims",
+    "citations",
+    "description text (page has none)"
+  ]
+}

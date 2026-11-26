@@ -1,0 +1,23 @@
+{
+  "rule": "(fixed before any prediction): annotated, not in the earlier 20-family pilot,\nGoogle-Patents-eligible (figures listed and reachable), ann_CONFIDENCE=HIGH, all four labels in\n{Y,N}, at least one Y and one N, abstract >= 700 chars, 3..10 figures; first by\nsha256(\"poc-single-patent-v1:\" + family).",
+  "n_candidates": 6,
+  "candidate_families_in_rank_order": [
+    "75198509",
+    "69077758",
+    "92249607",
+    "85286716",
+    "74513003",
+    "71282075"
+  ],
+  "family_number": "75198509",
+  "publication_number": "US2021063996",
+  "kind_code": "AA",
+  "document_id": "US20210063996A1",
+  "country": "US",
+  "url": "https://patents.google.com/patent/US20210063996A1/en",
+  "title": "[EN] A METHOD AND APPARATUS FOR OPTIMIZING DYNAMICALLY INDUSTRIAL PRODUCTION PROCESSES",
+  "n_figures_discovered_in_dry_run": 3,
+  "annotation_confidence": "HIGH",
+  "human_annotations": "withheld here; read from the annotated master only by the `report` stage",
+  "reason": "First of 6 families passing the fixed rule, ordered by a salted hash of the family number; classifier outputs were not consulted. All four labels are known (no U) with a mix of Y and N, the title+abstract is long enough, and Google Patents lists 3 figures for the US20210063996A1 page."
+}

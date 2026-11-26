@@ -1,0 +1,100 @@
+{
+  "human_annotations": {
+    "M": "Y",
+    "P": "N",
+    "R": "N",
+    "I": "N"
+  },
+  "annotation_confidence": "HIGH",
+  "annotation_evidence_source": "CLAIMS",
+  "comparison": {
+    "A_title_abstract": {
+      "M": {
+        "predicted": "N",
+        "human": "Y",
+        "agree": false
+      },
+      "P": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      },
+      "R": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      },
+      "I": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      }
+    },
+    "A_title_abstract_figdesc": {
+      "M": {
+        "predicted": "N",
+        "human": "Y",
+        "agree": false
+      },
+      "P": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      },
+      "R": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      },
+      "I": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      }
+    },
+    "C_title_abstract_figdesc": {
+      "M": {
+        "predicted": "N",
+        "human": "Y",
+        "agree": false
+      },
+      "P": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      },
+      "R": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      },
+      "I": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      }
+    },
+    "keyword_baseline": {
+      "M": {
+        "predicted": "Y",
+        "human": "Y",
+        "agree": true
+      },
+      "P": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      },
+      "R": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      },
+      "I": {
+        "predicted": "N",
+        "human": "N",
+        "agree": true
+      }
+    }
+  }
+}

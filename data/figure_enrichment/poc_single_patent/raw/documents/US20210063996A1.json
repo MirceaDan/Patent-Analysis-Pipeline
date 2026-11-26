@@ -1,0 +1,81 @@
+{
+  "family_number": "75198509",
+  "publication_number": "US2021063996",
+  "kind_code": "AA",
+  "document_id": "US20210063996A1",
+  "source_url": "https://patents.google.com/patent/US20210063996A1/en",
+  "retrieved_at_utc": "2026-11-25T11:46:31Z",
+  "publication_date": "2021-03-04",
+  "application_number": "US:16/960,116",
+  "n_figures_listed": 3,
+  "figures": [
+    {
+      "figure_id": "D00000",
+      "url": "https://patentimages.storage.googleapis.com/46/8c/31/9ca17fb81fa8b8/US20210063996A1-20210304-D00000.png",
+      "callout_labels": [
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1A:watchdog component",
+        "1B:model comparator component",
+        "1C:process resequencer component",
+        "2:production plant",
+        "2:production plant",
+        "3:previous value",
+        "3:previous value",
+        "3:previous value",
+        "3:previous value",
+        "3R:robot arm",
+        "3R:robot arm",
+        "3R:robot arm",
+        "3R:robot arm",
+        "4:database",
+        "4:database"
+      ]
+    },
+    {
+      "figure_id": "D00001",
+      "url": "https://patentimages.storage.googleapis.com/03/92/2b/a6ad6ac8abc967/US20210063996A1-20210304-D00001.png",
+      "callout_labels": [
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1:process optimizer apparatus",
+        "1A:watchdog component",
+        "1B:model comparator component",
+        "1C:process resequencer component",
+        "2:production plant",
+        "2:production plant",
+        "3:previous value",
+        "3:previous value",
+        "3:previous value",
+        "3:previous value",
+        "3R:robot arm",
+        "3R:robot arm",
+        "3R:robot arm",
+        "3R:robot arm",
+        "4:database",
+        "4:database",
+        "5:ERP database"
+      ]
+    },
+    {
+      "figure_id": "D00002",
+      "url": "https://patentimages.storage.googleapis.com/c4/6d/cd/e1eadc76894184/US20210063996A1-20210304-D00002.png",
+      "callout_labels": []
+    }
+  ],
+  "text": {
+    "title": "A method and apparatus for optimizing dynamically industrial production processes",
+    "abstract": "Abstract Provided is a a process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process optimizer including a watchdog component adapted to monitor the production modules of the production plant to detect configuration changes within the production plant; a model comparator component adapted to evaluate a production plant data model of the production plant including digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component; and a process resequencer component adapted to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component.",
+    "description": "ASSIGNMENT OF ASSIGNORS INTEREST (SEE DOCUMENT FOR DETAILS).",
+    "claims": "Claims ( 15 ) 1 . A process optimizer apparatus for optimizing dynamically an industrial production process of a production plant including physical production modules, the process process optimizer apparatus comprising: (a) a watchdog component configured to monitor the production modules of the production plant to detect configuration changes within the production plant; (b) a model comparator component configured to evaluate a production plant data model of the production plant comprising digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by the configuration changes detected by the watchdog component; and (c) a process resequencer component configured to perform a dynamic process optimization of the at least one production process of the production plant depending on the deviating model elements identified by the model comparator component. 2 . The process optimizer apparatus according to claim 1 , wherein the watchdog component of the process optimizer apparatus is connected to a communication infrastructure of the production plant to detect configuration changes within the production plant comprising hardware configuration changes and/or software configuration changes related to physical production modules of the production plant. 3 . The process optimizer apparatus according to claim 1 , wherein the watchdog component is fed with plant data of the production plant via a data interface. 4 . The process optimizer apparatus according to claim 1 , wherein the production plant data model comprises digital twin data models of the physical production modules of the production plant stored in a local memory of the process optimizer apparatus or stored in a remote database connected to the process optimizer apparatus. 5 . The process optimizer apparatus according to claim 1 , wherein the production plant data model comprises as twin data models for the physical production modules of the production plant attribute-value lists indicating capabilities of the respective production modules. 6 . The process optimizer apparatus according to claim 5 , wherein the model comparator component is implemented to perform rule-based attribute-to-attribute comparisons in the attribute-value lists of the stored production plant data model for production modules affected by configuration changes detected by the watchdog component to identify automatically deviating model elements, in particular value changes in the attribute-value lists. 7 . The process optimizer apparatus according to claim 1 , wherein the production plant data model comprises a semantic data model representing an ontology comprising digital twin data models characterizing capabilities of the physical production modules and dependencies between the physical production modules of the production plant. 8 . The process optimizer apparatus according to claim 1 , wherein the process resequencer component is configured to determine if the deviating model elements identified by the model comparator component have effects or implications on production process sequences of production process steps performed by production modules of the production plant and is configured to provide if an effect has been identified a dynamic resequencing of production process sequences performed by production modules of the production plant based on a predefined set of relations specifying dependencies between physical production modules and production process steps of the production process. 9 . The process optimizer apparatus according to claim 1 , wherein the production process steps of the production process sequences are stored in an ERP database. 10 . The process optimizer apparatus according to claim 1 , wherein the process optimizer apparatus is configured to perform the automatic optimization of the industrial production process of the production plant during a runtime of the production plant on the basis of real-time data received by the watchdog component of the process optimizer apparatus monitoring production modules of the production plant and/or during a simulation session where an industrial production process of the production plant is simulated. 11 . The process optimizer apparatus according to claim 1 , wherein the production modules of the production plant comprise transport production modules configured to transport workpieces between predefined positions to perform associated production process steps. 12 . The process optimizer apparatus according to claim 1 , wherein the digital twin data model of a physical production modules is updated automatically when the corresponding physical production module is upgraded. 13 . The process optimizer apparatus according to claim 1 , wherein the process optimizer apparatus is implemented on a local server of the production plant or on a remote server connected to the communication infrastructure of the production plant. 14 . A production plant comprising: a plurality of production modules configured to perform production process steps of a production process and the process optimizer apparatus according to claim 1 . 15 . A method for optimizing dynamically an industrial production process of a production plant including physical production modules, the method comprising: (a) monitoring production modules of the production plant to detect configuration changes within the production plant; (b) evaluating a production plant data model of the production plant comprising digital twin data models related to physical production modules of the production plant to identify automatically deviating model elements of digital twin data models related to physical production modules of the production plant affected by detected configuration changes; and (c) performing a dynamic process optimization of at least one production process of the production plant depending on the identified deviating model elements."
+  }
+}
