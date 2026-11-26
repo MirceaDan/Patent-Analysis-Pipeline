@@ -1,0 +1,83 @@
+{
+  "run_id": "baseline_v1_assignee_groups",
+  "seed_base": 2026,
+  "seeds": [
+    2026,
+    2027,
+    2028,
+    2029,
+    2030,
+    2031,
+    2032,
+    2033,
+    2034,
+    2035,
+    2036,
+    2037,
+    2038,
+    2039,
+    2040,
+    2041,
+    2042,
+    2043,
+    2044,
+    2045
+  ],
+  "repeats": 20,
+  "group_mode": "assignee",
+  "n_folds": 5,
+  "split": "fold0=test, fold1=val, folds2-4=train (StratifiedGroupKFold, shuffle)",
+  "model": {
+    "tfidf": {
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 2,
+      "max_features": 50000,
+      "sublinear_tf": true,
+      "stop_words": "english",
+      "lowercase": true
+    },
+    "classifier": "LogisticRegression(l2, liblinear, class_weight=balanced) per label, known targets only",
+    "C_grid": [
+      0.1,
+      1.0,
+      10.0,
+      100.0
+    ],
+    "fallback_C": 1.0,
+    "threshold": 0.5,
+    "selection": "validation macro average precision"
+  },
+  "feature_columns": {
+    "text_only": [
+      "Title",
+      "Abstract"
+    ],
+    "text_plus_images": [
+      "Title",
+      "Abstract",
+      "image_descriptions"
+    ]
+  },
+  "n_eligible_A": 598,
+  "n_BC": 23,
+  "dataset": "master_dataset/patent_families_enriched.csv",
+  "dataset_sha256": "89b315cb36a141cf4a57dfe29a8969944884f76c67ab4e3f1dc98c3dd776b100",
+  "versions": {
+    "python": "3.14.6",
+    "sklearn": "1.9.0",
+    "numpy": "2.4.6",
+    "pandas": "3.0.3"
+  },
+  "limitations": [
+    "B/C contain only 23 families; label support for R and I is ~3 positives. Per-label metrics are extremely noisy and the B-vs-C comparison cannot support a conclusion about image descriptions.",
+    "The image subset is not a random sample (diversity-selected pilot) and is restricted to publications where Google Patents lists figures (US/DE here, no CN).",
+    "Repeated splits reuse the same families, so pooled test rows and repeats are not independent; bootstrap CIs resample families but understate uncertainty from the small training sets.",
+    "Descriptions come from a 3B VLM and have NOT been human-reviewed; 30 of them lack a recorded model revision.",
+    "Default grouping has no related-family links (each family is its own group); citation and assignee relatedness are not controlled unless --group-mode assignee is used. The sample is stratified by assignee.",
+    "Sampling was stratified (not a population sample); metrics are not population estimates; labels F_* -> M/P/R/I mapping is inferred.",
+    "Checkpoints are scikit-learn pickles tied to the recorded library versions."
+  ]
+}
